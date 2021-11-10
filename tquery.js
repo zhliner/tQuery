@@ -1734,9 +1734,9 @@ Object.assign( tQuery, {
      */
     hasClass( el, names ) {
         return names.trim().
-            split(__reSpace).
+            split( __reSpace ).
             every(
-                it => it && el.classList.contains(it)
+                it => el.classList.contains( it )
             );
     },
 

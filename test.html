@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta http-equiv="no-cache">
+<title>tQuery test...</title>
+<script src="release/tquery.min.js"></script>
+
+<style>
+    body {
+        line-height: 2;
+    }
+    div#root {
+        display: inline-block;
+        background-color: #9ff;
+        border: 1px #369 solid;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    p#box-1 {
+        font-size: attr(data-css, px);
+    }
+
+    div#ibox {
+        width: 600px;
+        height: 600px;
+        resize: both;
+        overflow: hidden;
+        /* resize */
+        position: relative;
+        /* chrome resize */
+        /*border: 1px #999 solid;*/
+        background-color: #ccc;
+        /* position: fixed;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0; */
+    }
+
+    iframe {
+        width: 100%;
+        height: 100%;
+        resize: none;
+        border-width: 0;
+    }
+
+    li > div {
+        /*display: inline;*/
+    }
+
+    div._paths {
+        position: absolute;
+        bottom: 5px;
+        width: 100%;
+        height: 80px;
+        box-orient: horizontal;
+        -webkit-box-orient: horizontal;
+    }
+
+    ._paths > b {
+        display: block;
+    }
+
+    /* [ 代码高亮 ]
+     ************************************************************************/
+
+    code {
+        white-space: pre-wrap;
+        font-family: Monaco, 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono', Consolas, 'Courier New', monospace;
+        padding: 0 4px;
+        margin: 0 2px;
+        font-size: 0.9em;
+        word-break: break-all;
+        word-wrap: break-word;
+        background-color: #ddd;
+        border-radius: 2px;
+        text-shadow: 0 1px 1px #fff;
+    }
+
+    li > code {
+        color: #000;
+        border: none;
+        padding: 0;
+        margin: 0;
+        background-color: transparent;
+        font-size: 12px;
+    }
+    /* comments */
+    ._emot th {
+        text-align: right;
+    }
+    #frm {
+        box-sizing: border-box;
+        padding: 20px;
+        border: 1px #ccc solid;
+        margin: 30px;
+    }
+    fieldset {
+        border: 1px #6cc solid;
+    }
+</style>
+<style>
+p.ani {
+    animation-duration: 3s;
+    animation-name: slidein;
+}
+
+@keyframes slidein {
+    from {
+        margin-left: 100%;
+        width: 300%;
+    }
+
+    to {
+        margin-left: 0%;
+        width: 100%;
+    }
+}
+</style>
+<script>
+    // $.holdReady(true);
+    $.ready(function(){
+        console.info('tQuery load and DOMContentLoaded.');
+        // console.dir(frm);
+    });
+</script>
+</head>
+
+<body lang="">
+    <section id="s0" style="padding: 10px; border: 5px #ccc solid; width: 800px; position: relative;">
+        <p title="\t\s">首个段落。</p>
+        <p id="p2">第二个段落。</p>
+        <p id="p3" contenteditable="true">
+            <b onclick="alert('hai')">The third paragraph</b>. and the <em>em-element</em>
+        </p>
+        <pre contenteditable="true">
+            这是一个&lt;pre&gt;可编辑区域
+            <audio src="../docs/media/horse.ogg" controls="controls">Sorry, your browser doesn't support
+                embedded audios.</audio>
+        </pre>
+        <p><ruby contenteditable="" class="  _selected _focus ">
+            这是一段注音
+            <rp>(</rp>
+            <rt>zhè shì yī duàn zhù yīn</rt>
+            <rp>)</rp>
+        </ruby></p>
+    </section>
+    <section id="s1" on="hello('fine, it\'s ok.')">
+        <p onclick="alert('hai')">The first paragraph.</p>
+        <p>The second paragraph.</p>
+        <p><video src="../docs/media/movie.ogg" controls="controls">Sorry, your browser doesn't support
+            embedded videos.
+            <source src="../docs/media/cc0-videos/flower.webm" type="video/webm">
+            <source src="../docs/media/cc0-videos/flower.mp4" type="video/mp4">
+            <track kind="captions" src="../docs/media/examples/friday.vtt" srclang="en">
+        </video></p>
+        <hr width="100" size="5">
+    </section>
+    <form name="frm" id="frm">
+        新型控件
+        <input type="color" name="" id="xcolor">
+        <input type="datetime" name="" id="xdatatime" placeholder="YYYY-MM-DD hh:mm:ss" title="<input:datetime>">
+        <input type="time" name="" id="xtime" placeholder="hh:mm:ss">
+        <input type="date" name="" id="xdate" placeholder="YYYY-MM-DD">
+        <input type="range" name="" id="xrange">
+        <p>请选择操作系统&浏览器：</p>
+        <fieldset id="fos">
+            <label><input type="radio" name="os" value="windows" data-val="edge">Windows</label>
+            <label><input type="radio" name="os" value="macos" data-val="safari">MacOS</label>
+            <label><input type="radio" name="os" value="linux" data-val="chrome">GNU/Linux</label>
+        </fieldset>
+        <br>
+        <fieldset id="fset">
+            <label><input type="checkbox" name="browser" value="chrome" checked>Chrome</label>
+            <label><input type="checkbox" name="browser" value="edge">Edge</label>
+            <label><input type="checkbox" name="browser" value="firefox">Firefox</label>
+            <label><input type="checkbox" name="browser" value="safari">Safari</label>
+        </fieldset>
+        <p>这是一个段落：<input type="text" name="abc" value="Hello." /></p>
+        <br>
+        <input type="color" name="color" value="#99ff00">Colors<br>
+        <input type="text" name="txt" value="Hello"><br>
+        <input type="hidden" name="xxx" value="ABC" />
+        <button type="submit">提交</button>
+        <input type="reset" value="重置">
+        <p>
+            <textarea name="tt1" style="height: 100px; width: 200px; overflow: scroll; white-space: pre;">第一个编辑框。</textarea>
+        </p>
+        <p>
+            <textarea name="tt2" style="height: 100px; width: 200px; overflow: scroll; white-space: pre;">The second editbox.</textarea>
+        </p>
+    </form>
+    <menu class="_cells" data-pbo="" tpl-name="menu:cells">
+        <li data-tag="a" title="<a>"><a href="javascript:;">链接</a></li>
+        <li data-tag="code" title="<code>"><code>代码</code></li>
+        <li data-tag="strong" title="<strong>"><strong>重点</strong></li>
+        <li data-tag="em" title="<em>"><em>强调</em></li>
+        <li data-tag="sup" title="<sup>">O<sup>2</sup></li>
+        <li data-tag="sub" title="<sub>">O<sub>2</sub></li>
+        <li data-tag="q" title="<q>"><q>短引用</q></li>
+        <li data-tag="time" title="<time>"><time>时间</time></li>
+        <li data-tag="ins" title="<ins>"><ins>插入</ins></li>
+        <li data-tag="del" title="<del>"><del>删除</del></li>
+        <li data-tag="abbr" title="<abbr>"><abbr>缩写</abbr></li>
+        <li data-tag="small" title="<small>"><small>注脚</small></li>
+        <li data-tag="cite" title="<cite>"><cite>来源</cite></li>
+        <li data-tag="mark" title="<mark>"><mark>标记</mark></li>
+        <li data-tag="ruby" title="<ruby>">
+            <ruby>注音
+                <rp>(</rp>
+                <rt>zhù yīn</rt>
+                <rp>)</rp>
+            </ruby></li>
+        <li data-tag="code" title="表情"><code role="orz">^_^</code></li>
+        <li data-tag="dfn" title="<dfn>"><dfn>定义条目</dfn></li>
+        <li data-tag="samp" title="<samp>"><samp>样本</samp></li>
+        <li data-tag="kbd" title="<kbd>"><kbd>键盘字</kbd></li>
+        <li data-tag="s" title="<s>"><s>失效</s></li>
+        <li data-tag="u" title="<u>"><u>注记</u></li>
+        <li data-tag="var" title="<var>"><var>变量</var></li>
+        <li data-tag="bdo" title="<bdo>"><bdo dir="rtl">有向文本</bdo></li>
+    </menu>
+    <ol id="gocode">
+        <li>package main</li>
+        <li>func main() {</li>
+        <li>    print("hello the world.")</li>
+        <li>}</li>
+    </ol>
+    <div id="charlist" title="<b>Tag char test</b>">属性值的&lt;测试。</div>
+    <p id="webs">
+        <b>搜索引擎</b> |
+        <b>维基百科</b> |
+        <b>科技新闻</b> |
+    </p>
+    <ul id="webs2">
+        <li>搜索引擎</li>
+        <li>维基百科</li>
+        <li>科技新闻</li>
+        <li class="line"></li>
+    </ul>
+    <p id="evs">
+        <span>[事件容器]</span>
+    </p>
+    <ul id="ul4">
+        <li class="btn">按钮A</li>
+        <li class="btn">按钮B</li>
+        <li class="btn">按钮C</li>
+    </ul>
+    <div id="box4">
+        <b class="btn">按钮X</b> |
+        <b class="btn">按钮Y</b> |
+        <b class="btn">按钮Z</b> |
+    </div>
+    <template id="tpl">
+        <tr tpl-name="test:first">
+            <th>TH-1</th>
+            <td>AAA-1</td>
+            <td>AAA-2</td>
+            <td>AAA-3</td>
+        </tr>
+        <tr on="click">
+            <th>TH-2</th>
+            <td>BBB-1</td>
+            <td>BBB-2</td>
+            <td>BBB-3</td>
+        </tr>
+    </template>
+
+    <p><a href="#" title="[a] is a \[link\]">Click me</a></p>
+
+    <section id="s3" class="Content" style="position: relative;">
+        <p> <!-- P1 -->
+            这是一个<strong>通用的</strong><em>测试段落</em>。
+        </p>
+        <p> <!-- P2 -->
+            这是第二个<em>测试</em>段落。
+        </p>
+        <p> <!-- P3 -->
+            这是第三个测试段落。
+        </p>
+    </section>
+    <section id="sect">
+        <p style="font-size:1em; border:1px #999 solid; background-color:#ccc;">
+            测试段落的样式。
+        </p>
+        <p>
+            第二个段落。
+        </p>
+    </section>
+    <p id="test2">这是另一个<em>段落</em>。</p>
+    <ul id="ulist">
+        <li>Item 1</li>
+        <li class="Item">Item 2</li>
+        <li>Item 3</li>
+        <li class="End">Item 4</li>
+    </ul>
+    <p id="wrap">
+        <!-- Hai. -->
+        <em>Hello</em> The <strong>World</strong>!
+        <!-- 这是一个注释 -->
+    </p>
+
+    <article class="___Text" style="font-size:10pt;">
+        <div style="font-size:1em;width:10em;border:1px #999 solid;background-color:green;">1em字体</div>
+        <div style="font-size:1ex;width:10ex;border:1px #999 solid;background-color:#fff;">1ex字体</div>
+        <div style="font-size:1ch;width:10ch;border:1px #999 solid;background-color:#fff;">1ch字体</div>
+
+        <div style="font-size:1rem;width:10rem;border:1px #999 solid;">1rem字体效果</div>
+        <div style="font-size:11pt;width:110pt;border:1px #999 solid;">11pt字体效果</div><br>
+        <p id="box-1" tpl-file="test.tpl" val="$info == 'I\'m coder'" data-v="in data-v" tpl-name data-css="20">
+            <!-- 这里是一个注释 -->
+            <i>jQuery</i> 使用<b>测试，包括<i>JavaScript</i>语言特性</b>。。。
+            Img DataURL:
+            <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/PjxzdmcgaGVpZ2h0PSIzMnB4IiB2ZXJzaW9uPSIxLjEiIHZpZXdCb3g9IjAgMCAzMiAzMiIgd2lkdGg9IjMycHgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6c2tldGNoPSJodHRwOi8vd3d3LmJvaGVtaWFuY29kaW5nLmNvbS9za2V0Y2gvbnMiIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIj48dGl0bGUvPjxkZXNjLz48ZGVmcy8+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBpZD0iUGFnZS0xIiBzdHJva2U9Im5vbmUiIHN0cm9rZS13aWR0aD0iMSI+PGcgZmlsbD0iIzE1N0VGQiIgaWQ9Imljb24tMTAxLWZvbGRlci1zZWFyY2giPjxwYXRoIGQ9Ik0xNy4zMDg4NDMsMjAuMDE1OTQ5NyBDMTYuNTM5MDA3NSwyMC42MzE3NjM2IDE1LjU2MjUwNjksMjEgMTQuNSwyMSBDMTIuMDE0NzE4NSwyMSAxMCwxOC45ODUyODE1IDEwLDE2LjUgQzEwLDE0LjAxNDcxODUgMTIuMDE0NzE4NSwxMiAxNC41LDEyIEMxNi45ODUyODE1LDEyIDE5LDE0LjAxNDcxODUgMTksMTYuNSBDMTksMTcuNTYyNTA2OSAxOC42MzE3NjM2LDE4LjUzOTAwNzUgMTguMDE1OTQ5NywxOS4zMDg4NDMgTDIzLjM2Mzk2MSwyNC42NTY4NTQyIEwyMi42NTY4NTQyLDI1LjM2Mzk2MSBMMTcuMzA4ODQzLDIwLjAxNTk0OTcgTDE3LjMwODg0MywyMC4wMTU5NDk3IFogTTE3LDkgTDE1LDUgTDQuMDAyNzYwMTMsNSBDMi44OTY2NjYyNSw1IDIsNS44ODk2NzM5NSAyLDYuOTkxMTU1IEwyLDI1LjAwODg0NSBDMiwyNi4xMDg1Mjk1IDIuODk5NzEyNjgsMjcgMy45OTMyODc0NCwyNyBMMjkuMDA2NzEyNiwyNyBDMzAuMTA3NTc0OCwyNyAzMSwyNi4xMDczNzcyIDMxLDI1LjAwNDkxMDcgTDMxLDEwLjk5NTA4OTMgQzMxLDkuODkzMjMxOSAzMC4xMDI5Mzk5LDkgMjguOTk0MTQxMyw5IEwxNyw5IEwxNyw5IFogTTE0LjUsMjAgQzE2LjQzMjk5NjcsMjAgMTgsMTguNDMyOTk2NyAxOCwxNi41IEMxOCwxNC41NjcwMDMzIDE2LjQzMjk5NjcsMTMgMTQuNSwxMyBDMTIuNTY3MDAzMywxMyAxMSwxNC41NjcwMDMzIDExLDE2LjUgQzExLDE4LjQzMjk5NjcgMTIuNTY3MDAzMywyMCAxNC41LDIwIEwxNC41LDIwIFoiIGlkPSJmb2xkZXItc2VhcmNoIi8+PC9nPjwvZz48L3N2Zz4=" />
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABl0lEQVRYR+2XzVHCUBSFz3kkbHUBa7ECoQKhAqUDrUAKEEWgAO2ADqADoQIpAdfgjGtD3nUeOjAwELgJTFiQbU7u+965P3NDpPww5fNxAjgeB3KPQRkGXQLnu9aFWFQmbb+/q36dbu5Arh58kzjTBBNBf9LyK5pvVrVzgPxTIHECJXUhOUBCFxIDxHENkJFY3rv6SQnAYcto3MxepggAjJs+1QACvMCi7+z7b90ygec4qdADGK9kp2GBlAcSZdeGInwzXmYEO/3QQqgA3M3FcmiMdFcPspZVGilqnVABwHglhEEH5NUqgAgGEDRo8K5xQQXgxFHDatv7dWAqgG0OMOPVtHWgAoiqATeOYaDuBhXAzMJFF9RIXLvci/D1q+318vWf4br6iKoJPYCbX0ADf/N/kG9IUez0hpDbwPhVPwx6GohYAJtvJEMtxJ4BZvNdBXEAAB3EgQAWEF4Y9ElebErbEkCclSx66skIYGGTRkQ+J61sYbETuqWU0oki1ozZKK07HMK7pYVkX8G1cY7nv0BLvi/9yYFfmCPxIasAlQkAAAAASUVORK5CYII=" />
+            <img src="data:image/gif;base64,R0lGODlhGAAYAPfPAGxaTP/4eG45DK+ATdaqTf2qRbKtqf/uV/3TsXRnWv/jQ8vIxP/TNNKNGv+zSvfZmV0jAHFKJfPz8+7MRP/6hfzjqpSLgu3t7YN2alhDL/e2WJyUjf3ZPf7eQf27HP/2bdKOI7WysMK8t6Wdldze3/nJNbh1G4l7b5NoOL60qtqYHoFbMpOEfPDBW8d7EeWmJqWRfOOpO+Tj46aZkf/AN//TTuy8Wbh2JMmGGP/7m8fDv+C+Qv/8pubh2//qUKx9S//////rWI2Bdva7NeDEVP+6Mqmhmf/6kM20m//BHP60PeDHafisGeLVyPmqM7yrnLaXa5V6XPOqLOqsK/PIe/z16vzNnf/89v69I//hTYpgNv/YNnxuY9PRzaN1Rf/MJ//9tv/OKf/dSv/EJf/oTvr6+v7mT/f5/O7TYv/PSf/mU//xYPz8/PrJLf/pV//zZ/+zFP7iSf/9vK9tGNfT0v/+zK6nodrV0v/JKP/lSKV4SJptP//0Z45sSOCxL/jHM+68K4czALprDeDZ08qjhenHjrKDaLOjlPfKZ5aAa59UDP/+/PW3KffHWv/sVLhuE/bAK+uqG/3XONSaN/nkt+W/e//xX/bNOu7VdO6xL/fBRfXBS/C0I+7QTwAAAOzHf/jKX+7ENeGgI+7Ymv346+m0RtKPL/3XR9C7penn5e7o4/z7+/6/KeC3Nq9mD//SMHxJD/2tcN2cIPf39uqzSb6miKR8U//9/P2ubP/vYPa9YYZuXZ51TP/GPdjY2dLMx9vY1f3FQv+/TP/MQ/ni0/2xJf+zKv/JUf+3GvzOMbCeifrx2fXx7f3156h6SP///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQFMgDPACwAAAAAGAAYAAAI6gCfCRxIsKDBgwgTKlzIsKHDhxAjSpxIsaLFixglXqkAShOjIZsQPVjWsMKQPxw6KOggKRmkFpQUXmn0J46jm458kMnToc0UGwgXNSrh6MAaPnzerDngg+cWTkANPvjjaEIDFyDQUAjQ6WoDQBxEfSpIKpOZAw0KASkEIscREGoLNXjVhkAVgg8u+VgjCIhfQWB49P275UukSgRLdXDEp68hCILqgHEMeUsYD5MIvsjj6A0IQhA8maoj53PoBpaT4CAoSkFnNCYe3RglGZMJRSZCpV49UJaCvQGO8AAjJ/CRAGt8KCicxMXAgAAh+QQJCgDPACwEAAAAFAAYAAAIrQCfCRxI8BmbO1wyjKBTho2EggV1sMAAAIAOGWyArIJIEIMFYHZGjJAxqyHHgRgMODSQQMQFCRdOClwAQAIbHUI26PAVQqZAIXZestwgBIDPZzq4uDSQoemKo88ysBCR4FmUPiigRs1gZOBTrQW/gh3YZyzBKGYH1korsAfEPGzZWnoTN64ACAXvHjUUoaAhWCfpPgMCpCBhgV8K8hEIhJBhx3WfJQZraSCeggEBACH5BAUUAM8ALAAAAAAYABgAAAj/AJ8JHEiwoMGDCBMqXMiwocOCdjBwWfBQYIoTCTCcsCPwySCHQnpcWABAoLInCGEQHIFBiAUSXRJYTHjokMAZFoxssIABg4WEH58Nsnlnw4UzvkJwyQClCcJBiQiyoCPjzAVfBjLo2cMLCTODMKI+W3BCiJARBiwIyeDsxw8vKKAEFfrskIhnG7qMsJCgL4AIWvZ4+THgxx5bqAbB+PjxxK9UZS7I2ADACpI+gb04GzDAS0EETzCwEEFCx4ZdThAQa6YlszNnBGMVUCKMAAsAuKEUKVZAw6wnKwLvEXgLVwFhwhwoL+CgwGwlrKToesZMWXCBVpQcS5OmhvcaaYb1k6JRxBgNKVQEqlJZpYAYMXMC7QhywBGZOH4CuRqDDAutZgRZEYwYZrixQyCBEGHJgYH4wQAeWCDDxCcEaXBKFkEgqOEHGiIYBn9MxECQE1mokcsHRCC4RAApBtJKB6+M4QEcshAkRRZuvHFDIEvkcAQFAfBx4BwPzqgCQVNg+EYAR+TAQw5AfnAAGR08mAQcDQwUEAA7" />
+            Img SVG:
+            <svg height="69px" version="1.1" viewBox="0 0 139 139" width="59px" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M127.558,111.961L100.249,84.65c4.64-7.387,7.333-16.118,7.333-25.488c0-26.509-21.49-47.996-47.998-47.996  c-26.508,0-47.996,21.487-47.996,47.996c0,26.51,21.487,47.995,47.996,47.995c10.197,0,19.642-3.188,27.414-8.605l26.984,26.986  c1.875,1.873,4.333,2.806,6.788,2.806c2.458,0,4.913-0.933,6.791-2.806C131.308,121.787,131.308,115.711,127.558,111.961z   M59.584,91.607c-17.917,0-32.443-14.525-32.443-32.443S41.667,26.72,59.584,26.72c17.918,0,32.443,14.526,32.443,32.444  S77.502,91.607,59.584,91.607z"/></svg>
+        </p>
+        <p onClick="get();" style="cursor:pointer;">
+        <svg baseProfile="full"
+             width="300" height="200" >
+
+          <rect width="50%" height="100%" fill="orangered" />
+          <circle cx="150" cy="100" r="80" fill="green" />
+          <text x="150" y="125" font-size="60" text-anchor="middle" fill="white">SVG</text>
+        </svg>
+        </p>
+        <p id="test" class="Test">
+            这是一个<strong>通用的</strong><em>测试段落</em>。包含了一些<em>行内元素</em>。包含了&lt;strong&gt;标签。
+        </p>
+        <h3></h3>
+        <h4></h4>
+        <h5></h5>
+        <h6></h6>
+        <hr/>
+        <div></div>
+        <div class="_clear"></div>
+        <br >
+        <p></p>
+        <img />
+        <ol type="I" start="1" id="002">
+            <li on="1">第1个列表</li>
+            <li on="2" by="by2">第2个列表</li>
+            <li on="3">第3个列表</li>
+            <li>第4个列表</li>
+            <li>这是一个子列表
+                <ol id="med01">
+                    <li>.....</li>
+                    <li id="beg">第二行</li>
+                    <li><span id="medbox" class="_inMed" contenteditable>内部列表<b id="bold1">这里是一个<em id="em1">子元素</em></b>。。。</span></li>
+                    <li><span contenteditable>这里是一个注音：
+                            <ruby>非
+                                <rp>（</rp>
+                                <rt>fei</rt>
+                                <rp>）</rp>
+                            </ruby>。汉（han）</span></li>
+                </ol>
+            </li>
+        </ol>
+    </article>
+    <p @on="test-on" $by="by-attr">
+        <input type="text" id="curpos" value="Hello..." />
+        <input type="submit" id="submit" value="提交">
+    </p>
+    <form name="frm01" onsubmit="return false">
+        <label><input name="chk1" id="chk1" type="checkbox" value="hai" />Click me</label>
+        <br>
+        <input type="color" name="color1" value="#99ff00">Colors<br>
+        Select your favorite fruit:
+        <select name="msel" id="msel" multiple>
+            <option value="">Default</option>
+            <option value="A">Apple</option>
+            <option value="P">Pineapple</option>
+            <option value="B">Banana</option>
+        </select>
+        <br>
+        <select name="sel" id="sel">
+            <option value="A">Apple</option>
+            <option value="O">Orange</option>
+            <option value="P">Pineapple</option>
+            <option value="B">Banana</option>
+        </select>
+        <br /><br />
+        <select name="mselg" id="opts" multiple>
+            <optgroup label="Swedish Cars">
+                <option value ="volvo">Volvo</option>
+                <option value ="saab">Saab</option>
+            </optgroup>
+
+            <optgroup label="German Cars">
+                <option value ="mercedes">Mercedes</option>
+                <option value ="audi">Audi</option>
+            </optgroup>
+        </select>
+        <input name="button" type="button" onclick="getIndex()" value="Alert index of selected option">
+        <div id="box1" style="position:relative; width:400px; height:200px; border:1px #666 solid;">
+            <textarea name="txtbox" id="txtbox" rows="5" cols="50">第一行。
+这是第二行。</textarea>
+        </div>
+    <br>
+    您喜欢的浏览器是：<input name="answer" type="text" id="answer" size="20">
+    <input type="submit" value="提交" />
+    </form>
+
+    <table border="1" id="tbl" width="50%">
+        <caption>这是一个表格的标题</caption>
+        <caption>这是一个表格的标题22</caption>
+        <thead>
+            <tr dir="rtl">
+                <th>TH1</th>
+                <th>TH2</th>
+                <th>TH3</th>
+                <th>TH4</th>
+                <th>TH5</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Tdx1</td>
+                <td colspan="2">Tdx2-3</td>
+                <td>Tdx4</td>
+                <td>Tdx5</td>
+            </tr>
+            <tr class="_odd">
+                <th>1</th>
+                <td>2</td>
+                <td>3</td>
+                <td>4</td>
+                <td>5</td>
+            </tr>
+            <tr class="_even">
+                <th>2</th>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr class="_odd">
+                <th>3</th>
+                <td>&nbsp;</td>
+                <td id="td2" colspan="2">&nbsp;</td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr class="_even">
+                <th>4</th>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td>
+            </tr>
+        </tbody>
+    </table>
+    <template id="mypar">
+        <style>
+	  p {
+	      color: white;
+	      background-color: #666;
+	      padding: 5px;
+	    }
+	  </style>
+	  <p>My paragraph</p>
+    </template>
+    <div id="root">
+        <div id="ibox">
+            hai.
+            <!-- <iframe src="ui-iframe.html" frameborder="0"></iframe> -->
+        </div>
+    </div>
+    <div>
+    </div>
+</body>
+<script>
+    // let sel = $.Element('link', {rel: 'stylesheet', href: 'https://api.jquery.com/jquery-wp-content/themes/jquery/css/base.css?v=1'});
+    // $.style(sel).then(el => {
+    //     console.info('holdReady(false)');
+    //     $.holdReady(false);
+    // });
+    // console.info('DOM first loaded.');
+</script>
+</html>
