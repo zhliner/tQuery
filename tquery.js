@@ -1927,7 +1927,7 @@ Object.assign( tQuery, {
      * 如果指示忽略大小写，值必须是字符串。
      * @param  {Element} el 目标元素
      * @param  {String} name 特性名（单个）
-     * @param  {Value|Array2|Function|null} val 切换值获取值回调，可选
+     * @param  {Value|Array2|Function|null} val 切换值或取值回调，可选
      * @param  {Boolean} i 相等比较忽略大小写，可选
      * @return {Element} el
      */
@@ -5565,6 +5565,7 @@ function toggleValue( val, old, i ) {
 /**
  * 是否为相等的值。
  * 如果忽略大小写，值必须是字符串。
+ * 因为元素的特性值必然为字符串，所以相等比较为宽松类型。
  * @param  {Value} v1 对比值1
  * @param  {Value} v2 对比值2
  * @param  {Boolean} i 是否忽略大小写
