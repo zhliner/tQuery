@@ -575,7 +575,7 @@ Object.assign( tQuery, {
      * 如果需要插入节点内容，用户应当先创建一个空元素后使用.append()接口。
      *
      * @param  {String} tag 标签名
-     * @param  {String|Object|Map} data 源码或置对象
+     * @param  {String|Object|Map} data 源码或配置对象
      * @param  {String} ns 所属名称空间
      * @param  {Document} doc 所属文档
      * @return {Element} 新元素
