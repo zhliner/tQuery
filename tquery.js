@@ -6009,6 +6009,7 @@ function buildFragmentSVG( html, doc ) {
 
 /**
  * 从节点数据创建文档片段。
+ * 如果数据不是节点元素，会被文本化后插入。
  * @param {Node|[Node]|.Iterator} nodes 数据集
  * @param {Document} doc 文档对象
  */
@@ -6019,7 +6020,7 @@ function fragmentNodes( nodes, doc ) {
     for ( const it of arrayArgs(nodes) ) {
         _buf.push( it.nodeType ? varyRemove(it) : it )
     }
-    return _frg.append(..._buf), _frg;
+    return _frg.append( ..._buf ), _frg;
 }
 
 
