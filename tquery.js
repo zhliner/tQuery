@@ -631,7 +631,7 @@ Object.assign( tQuery, {
      *
      * 可以传递一个函数自行处理尚未导入的文档片段，接口：function(DocumentFragment): void。
      * 传递clean为非null的任意假值可以取消默认的清除行为。
-     * 如果传递clean为true，表示创建的是一个SVG文档片段（用于插入<svg>元素内）。
+     * 如果传递clean为'svg'，表示创建的是一个SVG文档片段（用于插入<svg>元素内）。
      * 注：
      * 文档片段在被导入（document.adoptNode）之前，其中的脚本不会运行。
      * 创建SVG文档片段时，无节点清理功能（占用clean实参位置）。
@@ -6059,19 +6059,19 @@ const
 function cleanFragment( frg ) {
     let _els = $all( _cleanTags, frg );
 
-    if (_els.length) {
-        for (const el of _els) {
+    if ( _els.length ) {
+        for ( const el of _els ) {
             el.remove();
         }
-        Win.console.warn('html-code contains forbidden tag! removed.');
+        Win.console.warn( `html contains ${_els.length} forbidden tag! removed.` );
     }
     _els = $all( _cleanAttrs, frg );
 
-    if (_els.length) {
-        for (const el of _els) {
+    if ( _els.length ) {
+        for ( const el of _els ) {
             clearAttrs.forEach( n => el.removeAttribute(n) );
         }
-        Win.console.warn('html-code contains forbidden attribute! removed.');
+        Win.console.warn( `html contains ${_els.length} forbidden attribute! removed.` );
     }
 }
 
