@@ -2239,15 +2239,15 @@ Object.assign( tQuery, {
      * @return {this}
      */
     on( el, evn, slr, handle, cap ) {
-        if (!evn) {
-            return;
+        if ( !evn ) {
+            throw new Error('need event-name');
         }
         eventBinds(
             'on',
             el,
-            slr,
+            slr && slr.trim(),
             cap,
-            ...customHandles(evn, handle)
+            ...customHandles( evn, handle )
         );
         return this;
     },
@@ -2269,15 +2269,12 @@ Object.assign( tQuery, {
      * @return {this}
      */
     off( el, evn, slr, handle, cap ) {
-        if (!evn) {
-            evn = '';
-        }
         eventBinds(
             'off',
             el,
-            slr,
+            slr && slr.trim(),
             cap,
-            ...customHandles(evn, handle)
+            ...customHandles( evn || '', handle )
         );
         return this;
     },
@@ -2294,15 +2291,15 @@ Object.assign( tQuery, {
      * @return {this}
      */
     one( el, evn, slr, handle, cap ) {
-        if (!evn) {
-            return;
+        if ( !evn ) {
+            throw new Error( 'need event-name' );
         }
         eventBinds(
             'one',
             el,
-            slr,
+            slr && slr.trim(),
             cap,
-            ...customHandles(evn, handle)
+            ...customHandles( evn, handle )
         );
         return this;
     },
@@ -5082,8 +5079,7 @@ function getStyles( el ) {
     if ( !view || !view.opener ) {
         view = Win;
     }
-
-    return view.getComputedStyle(el);
+    return view.getComputedStyle( el );
 }
 
 
@@ -7498,8 +7494,10 @@ const Event = {
     //      evname: Map{
     //          selector: Map{
     //              handle: [
-    //                  [ bound, once ],  // capture:0:false
-    //                  [ bound, once ]   // capture:1:true
+    //                  [ bound, once ],  // [0]:capture:false
+    //                  [ bound, once ]   // [1]:capture:true
+    //                  // 说明：
+    //                  // 二元数组存在[0]位表示capture为false，[1]为true
     //              ]
     //          }
     //      }
@@ -7578,8 +7576,8 @@ const Event = {
      * @param {Boolean} cap 是否为捕获，可选
      */
     on( el, evn, slr, handle, cap ) {
-        let [_evn, _cap] = this._evncap(evn, slr, cap),
-            [_slr, _get] = this._matches(slr);
+        let [_evn, _cap] = this._evncap( evn, slr, cap ),
+            [_slr, _get] = this._matches( slr );
 
         if ( this.isBound(el, _evn, _slr, handle, _cap) ||
             // 确定会绑定才激发通知
@@ -7632,7 +7630,6 @@ const Event = {
      * - 解除绑定的同时会移除相应的存储记录（包括单次绑定）。
      *   即：单次绑定在调用之前可以被解除绑定。
      * - 传递事件名为假值会解除元素全部的事件绑定。
-     * - slr的含义参考接口 $.off() 说明。
      * @param {Element} el 目标元素
      * @param {String} evn 事件名
      * @param {String|Value} slr 委托选择器，可选
@@ -7751,18 +7748,20 @@ const Event = {
      * 如果未指定事件名，则检索全部注册项，返回一个对象：{
      *      evn: [Function|EventListener]
      * }
+     * 如果slr前置了~标识符，紧跟标识符之后不应有空白。
      * @param  {Element} el 绑定事件元素
      * @param  {String} evn 事件名（单个），可选
-     * @return {Object[Function|EventListener]|undefined} 用户调用/处理器集
+     * @param  {String} slr 用户选择器串，可选
+     * @return {Object|[Function|EventListener]|undefined} 用户调用/处理器集
      */
-    handles( el, evn ) {
+    handles( el, evn, slr ) {
         let _m1 = this.store.get( el );
         if ( !_m1 ) return;
 
         if ( evn ) {
-            return evnHandler( _m1, evn );
+            return evnHandler( _m1, evn, slr );
         }
-        return [..._m1.keys()].reduce( (o, n) => (o[n] = evnHandler(_m1, n), o), {} );
+        return [..._m1.keys()].reduce( (o, n) => (o[n] = evnHandler(_m1, n, slr), o), {} );
     },
 
 
@@ -7812,7 +7811,7 @@ const Event = {
      *
      * @param  {Function} handle 用户调用
      * @param  {Function} current 获取当前元素的函数
-     * @param  {String|null} slr 选择器串（已合法）
+     * @param  {String|null} slr 选择器串（可含前置~标识符）
      * @return {Function} 处理器函数
      */
     handler( handle, current, slr ) {
@@ -7830,7 +7829,7 @@ const Event = {
      * - 处理器返回false可以阻止原生非事件类方法的调用（trigger）。
      * @param  {Function} handle 用户处理函数
      * @param  {Function} current 获取当前元素的函数
-     * @param  {String|null} slr 委托选择器（已合法）
+     * @param  {String|null} slr 委托选择器串
      * @param  {Event} ev 原生事件对象
      * @return {Boolean|null}
      */
@@ -7913,16 +7912,13 @@ const Event = {
      * 获取匹配选择器和匹配句柄。
      * 主要用于区分委托模式下的匹配类型（起点匹配或搜寻匹配）。
      * @param  {String} slr 选择器
-     * @return {[String, Function]} 合法选择器和匹配函数
+     * @return {[String, Function]} 选择器和匹配函数
      */
     _matches( slr ) {
         if ( !slr ) {
             return [ null, this._current ];
         }
-        if ( slr[0] == this.originPrefix) {
-            return [ slr.substring(1).trim(), this._target ];
-        }
-        return [ slr, this._delegate ];
+        return [ slr, slr[0] === this.originPrefix ? this._target : this._delegate ];
     },
 
 
@@ -8084,13 +8080,17 @@ const Event = {
      * 起点目标匹配。
      * 仅用于委托模式下的选择器匹配。
      * 用于优化委托模式下的单一检测（不再向上尝试匹配）。
+     * 注记：
+     * 存储中选择器保留前置~字符，使得.off()可以定位解绑。
      * @param  {Event} ev 事件对象
-     * @param  {String} slr 合法的选择器串
+     * @param  {String} slr 选择器串（前置~字符）
      * @return {Element|null}
      */
     _target( ev, slr ) {
         let _its = ev.target,
             _box = ev.currentTarget;
+
+        slr = slr.substring(1).trim();
 
         if ( !subslr.test(slr) ) {
             return targetElem( _box, _its, slr );
@@ -8192,12 +8192,12 @@ function delegateClosest( box, beg, slr ) {
  * 惯用处理器封装。
  * 对两个简单的值（false|null）封装为相应的处理器。
  * 仅用户友好（语法糖）。
- * @param  {String|Object} 事件名或配置对象
+ * @param  {String|Object} evn 事件名或配置对象
  * @param  {Function|false|null} handle 用户处理器
  * @return {[String|Object, Function|EventListener]}
  */
 function customHandles( evn, handle ) {
-    return typeof evn == 'string' ?
+    return typeof evn === 'string' ?
         [ evn, customHandle( handle ) ] :
         [ tQuery.each( evn, (fn, k) => evn[k] = customHandle(fn) ), null ];
 }
@@ -8265,11 +8265,19 @@ function evnsBatch( type, el, evn, slr, handle, cap ) {
  * 提取事件名对应的原始处理器集。
  * @param  {Map} map 存储集（evname:Map）
  * @param  {String} evn 事件名
+ * @param  {String} slr 用户选择器串，可选
  * @return {[Function|EventListener]|void} 用户调用/处理器集
  */
-function evnHandler( map, evn ) {
+function evnHandler( map, evn, slr ) {
     let _m2 = map.get( evn );
-    return _m2 && [..._m2.values()].map( m3 => [...m3.keys()] ).flat();
+    if ( !_m2 ) return;
+
+    if ( !slr ) {
+        return [..._m2.values()].map( m3 => [...m3.keys()] ).flat();
+    }
+    let _m3 = _m2.get( slr );
+
+    return _m3 && [ ..._m3.keys() ];
 }
 
 
@@ -8442,12 +8450,15 @@ Object.assign( tQuery, {
      * 如果未指定事件名，则检索全部注册项，返回一个对象：{
      *      evn: [Function|EventListener]
      * }
+     * 注意：
+     * 如果slr前置了~标识符，紧跟标识符之后不应有空白。
      * @param  {Element} el 目标元素
      * @param  {String} evn 事件名（单个），可选
-     * @return {Object[Function|EventListener]|undefined} 用户调用/处理器集
+     * @param  {String} slr 用户选择器串，可选
+     * @return {Object|[Function|EventListener]|undefined} 用户调用/处理器集
      */
-    handles( el, evn ) {
-        return Event.handles( el, evn );
+    handles( el, evn, slr ) {
+        return Event.handles( el, evn, slr );
     },
 
 
