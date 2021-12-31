@@ -53,7 +53,9 @@ const __Handles = {
 
     // 节点变化。
     nodesdone:  ev => new Nodesdone( ev.detail[0] ),
-    nodeok:     ev => new Nodesdone( [ev.target] ),  // 冗余无害（方便用户）
+    // 冗余无害（方便用户）
+    // 因为如果donesdone的.back()已经移除节点，再次移除无害。
+    nodeok:     ev => new Nodesdone( [ev.target] ),
     detach:     ev => new Remove( ev.target ),
     emptied:    ev => new Emptied( ev.target, ev.detail ),
     // 事前提取信息。
@@ -620,7 +622,9 @@ function adjacentTeam( nodes ) {
         }
         _buf.push( (_sub = [nd]) );
     }
-    return _buf;
+    // 滤掉纯空文本节点
+    // 浏览器对首个纯空文本节点忽略。
+    return _buf.map( nds => nds.filter(nd => nd.textContent) );
 }
 
 

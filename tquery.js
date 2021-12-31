@@ -1474,14 +1474,14 @@ Object.assign( tQuery, {
      * @param  {Boolean} eventdeep 包裹元素子孙元素上注册的事件处理器是否克隆
      * @return {Element} 包裹的容器根元素
      */
-    wrap( node, box, clone, event, eventdeep, doc = Doc ) {
+    wrap( node, box, clone, event, eventdeep, doc = node.ownerDocument || Doc ) {
         if ( typeof node === 'string' ) {
             node = doc.createTextNode(node);
         }
         if ( isFunc(box) ) {
             box = box( node );
         }
-        let [_box, _root] = wrapBox(box, clone, event, eventdeep, doc);
+        let [_box, _root] = wrapBox( box, clone, event, eventdeep, doc );
 
         return varyWrap( node, _root || _box, _box );
     },
@@ -6797,6 +6797,7 @@ function varyFillx2( el, name, nodes, evn2 ) {
 /**
  * 节点包裹封装。
  * 兼容文档片段为被包裹内容。
+ * 注意：
  * 如果替换操作处理器调用了 Event.preventDefault()，
  * 替换操作会略过，但目标节点依然会从DOM中脱离（插入数据容器内前端）。
  * @param  {Node|Fragment} node 被包裹节点
@@ -7529,6 +7530,19 @@ const Event = {
         'reset',    // form
         'scroll',
         'select',   // textarea, input:text
+        //....
+    ]),
+
+
+    /**
+     * 需要调用完成元素逻辑。
+     * 但调用不会激发事件，用于trigger事件支持。
+     */
+    elementFulfill: new Set([
+        'submit',   // Form
+        'load',     // Media
+        'finish',   // Animation
+        'cancel',   // Animation
     ]),
 
 
@@ -7826,7 +7840,7 @@ const Event = {
     /**
      * 封装的实际处理器。
      * - 普通函数处理器内的this无特殊意义。
-     * - 处理器返回false可以阻止原生非事件类方法的调用（trigger）。
+     * - 处理器返回false可以阻止原生非事件类方法的调用。
      * @param  {Function} handle 用户处理函数
      * @param  {Function} current 获取当前元素的函数
      * @param  {String|null} slr 委托选择器串
@@ -7841,14 +7855,9 @@ const Event = {
                 selector:   slr || null,
                 delegate:   ev.currentTarget,
             }
-        // 需要调用元素的原生方法完成浏览器逻辑，
-        // 如：form:submit, video:load 等。
-        // 只要用户调用通过就返回true，Event.preventDefault()已处理。
-        // 即：
-        // - 用户处理器返回false是有效的，此时会向系统返回false。
-        // - 如果用户调用Event.preventDefault()，效果同上，但会向系统返回true。
+        // 需要调用元素的原生方法完成浏览器逻辑。
         // 注记：
-        // 明确的返回值便于单次处理的解绑判断（._onceHandler）。
+        // 明确的返回值便于._onceHandler匹配判断。
         return _elo && handle(ev, _elo) !== false && !this._methodCall(ev, _elo.current);
     },
 
@@ -7856,23 +7865,19 @@ const Event = {
     /**
      * 元素上方法调用。
      * 主要为trigger激发原生方法的DOM逻辑完成。
-     * 如：form:submit()，它不会产生一个submit事件。
-     * 也可用于普通方法，传递定制数据（ev.detail）为其实参。
+     * 如：form:submit, video:load
+     * 如果用户处理器调用了Event.preventDefault()，不会执行调用，返回false。
      * @param  {Event} ev 事件对象
      * @param  {Element} el 目标元素
      * @return {true|void}
      */
     _methodCall( ev, el ) {
         let _evn = ev.type,
-            _fun = el[_evn];
+            _fun = el[ _evn ];
 
-        if ( ev.defaultPrevented ||
-            // 避免循环触发
-            this.willevent(_evn) ||
-            !isFunc(_fun) ) {
-            return;
-        }
-        _fun.bind(el)( ...(isArr(ev.detail) ? ev.detail : [ev.detail]) );
+        return ev.defaultPrevented ||
+            this.elementFulfill.has(_evn) &&
+            _fun && _fun.bind(el)( ...(isArr(ev.detail) ? ev.detail : [ev.detail]) );
     },
 
 
