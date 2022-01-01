@@ -889,12 +889,11 @@ Object.assign( tQuery, {
     /**
      * 提取元素内的文本节点。
      * 内部所有的文本节点会被扁平化为一个数组。
-     * 注：纯空节点（无值）不会被忽略。
      * @param  {Element} el 目标元素
-     * @param  {Boolean} clean 忽略无值的空文本节点，可选
+     * @param  {Boolean} none 忽略无值的空文本节点，可选
      * @return {[Text]} 文本节点集
      */
-    textNodes( el, clean ) {
+    textNodes( el, none ) {
         let _buf = [];
 
         for ( const nd of el.childNodes ) {
@@ -903,7 +902,7 @@ Object.assign( tQuery, {
             if ( _t === 1 ) {
                 _buf.push( ...tQuery.textNodes(nd) );
             }
-            else if ( _t === 3 && (!clean || nd.textContent) ) {
+            else if ( _t === 3 && (!none || nd.textContent) ) {
                 _buf.push( nd );
             }
         }
@@ -1147,7 +1146,7 @@ Object.assign( tQuery, {
      * 传递clean为真可以忽略空文本节点。
      * @param  {Node} node 起始节点
      * @param  {Boolean} comment 是否包含注释，可选
-     * @param  {Boolean} clean 排除空文本（无值）节点，可选
+     * @param  {Boolean} clean 排除空白文本节点，可选
      * @return {Node|null}
      */
     prevNode( node, comment, clean ) {
@@ -1160,7 +1159,7 @@ Object.assign( tQuery, {
      * 仅包含元素、文本节点和可能的注释节点。
      * @param  {Node} node 起始节点
      * @param  {Boolean} comment 包含注释节点，可选
-     * @param  {Boolean} clean 排除空文本（无值）节点，可选
+     * @param  {Boolean} clean 排除空白文本节点，可选
      * @return {[Node]}
      */
     prevNodes( node, comment, clean ) {
@@ -1219,7 +1218,7 @@ Object.assign( tQuery, {
      * 传递clean为真可以忽略空文本节点。
      * @param  {Node} node 起始节点
      * @param  {Boolean} comment 是否包含注释，可选
-     * @param  {Boolean} clean 排除空文本（无值）节点，可选
+     * @param  {Boolean} clean 排除空白文本节点，可选
      * @return {Node|null}
      */
     nextNode( node, comment, clean ) {
@@ -1232,7 +1231,7 @@ Object.assign( tQuery, {
      * 仅包含元素、文本节点和可能的注释节点。
      * @param  {Node} node 起始节点
      * @param  {Boolean} comment 包含注释节点，可选
-     * @param  {Boolean} clean 排除空文本（无值）节点，可选
+     * @param  {Boolean} clean 排除空白文本节点，可选
      * @return {[Node]}
      */
     nextNodes( node, comment, clean ) {
@@ -1267,15 +1266,15 @@ Object.assign( tQuery, {
     /**
      * 获取元素内容。
      * - 默认返回元素内的全部子元素和文本节点。
-     * - 传递 clean 为真忽略空文本节点（计数也忽略）。
+     * - 传递 clean 为真忽略空白文本节点（计数也忽略）。
      * - 传递 comment 为真表示包含注释节点。
      * - 可以指定仅返回目标位置的一个子节点。
      * - 位置计数支持负值从末尾算起。
-     * - idx 空串表示仅获取内部纯文本节点。
+     * - idx 空串表示仅获取内部文本节点。
      * @param  {Element} el 容器元素
      * @param  {Number|null} idx 子节点位置（从0开始），可选
      * @param  {Boolean} comment 包含注释节点，可选
-     * @param  {Boolean} clean 排除空文本（无值）节点，可选
+     * @param  {Boolean} clean 排除空白文本节点，可选
      * @return {[Node]|Node}
      */
     contents( el, idx, comment, clean ) {
@@ -1313,10 +1312,10 @@ Object.assign( tQuery, {
     /**
      * 获取兄弟节点集。
      * 仅包含元素、文本节点和可能的注释节点。
-     * 传递 clean 为真可以忽略空文本节点。
+     * 传递 clean 为真可以忽略空白文本节点。
      * @param  {Node} node 当前节点
      * @param  {Boolean} comment 包含注释节点
-     * @param  {Boolean} clean 排除空文本（无值）节点，可选
+     * @param  {Boolean} clean 排除空白文本节点，可选
      * @return {[Node]}
      */
     siblingNodes( node, comment, clean ) {
@@ -1516,7 +1515,7 @@ Object.assign( tQuery, {
     /**
      * 元素解包裹。
      * - 用元素内容替换元素本身（内容上升到父级）。
-     * - 可以传递clean为真指示清除返回集中的空节点（注释节点会保留）。
+     * - 可以传递clean为真指示清除返回集中的空白文本节点（注释节点会保留）。
      * @param  {Element} el 容器元素
      * @param  {Boolean} clean 是否清理返回集，可选
      * @return {[Node]} 容器内子节点集
@@ -1547,7 +1546,7 @@ Object.assign( tQuery, {
     /**
      * 清空元素内容。
      * 仅适用于元素节点，非法实参返回其自身。
-     * 可以传递clean为真指示清除返回集中的空文本。
+     * 可以传递clean为真指示清除返回集中的空白文本节点。
      * @param  {Element} el 目标元素
      * @param  {Boolean} clean 是否清理返回集，可选
      * @return {[Node]|Value} 被清除的节点集
@@ -5726,7 +5725,7 @@ function usualNode( node ) {
  */
 function usualNodeClean( node ) {
     let _nt = node.nodeType;
-    return _nt == 1 || (_nt == 3 && node.textContent) || _nt == 8;
+    return _nt == 1 || (_nt == 3 && node.textContent.trim()) || _nt == 8;
 }
 
 
@@ -5750,7 +5749,7 @@ function masterNode( node ) {
  */
 function masterNodeClean( node ) {
     let _nt = node.nodeType;
-    return _nt === 1 || ( _nt === 3 && node.textContent );
+    return _nt === 1 || ( _nt === 3 && node.textContent.trim() );
 }
 
 
@@ -5761,7 +5760,7 @@ function masterNodeClean( node ) {
  * 有时候节点间会有一些纯空（无值）的文本节点，
  * 浏览器有时候会自动忽略它们（如.normalize()操作）。
  * @param {Boolean} comment 包含注释节点
- * @param {Boolean} clean 排除空文本（无值）节点
+ * @param  {Boolean} clean 排除空白文本节点，可选
  */
 function filterFunc( comment, clean ) {
     if ( comment ) {

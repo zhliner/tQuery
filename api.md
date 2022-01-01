@@ -208,12 +208,12 @@ $.isXML( document.body );  // false
 > 目标控件或表单上需要绑定 `changed` 或你定制的事件来做监听处理。
 
 
-### $.textNodes( el, clean? ): [Text]
+### $.textNodes( el, none? ): [Text]
 
 提取目标元素内的全部文本节点集，包含纯空（无值）的文本节点。
 
 - `el: Element` 目标元素。
-- `clean?: Boolean` 是否忽略无值的空文本节点，可选
+- `none?: Boolean` 是否忽略无值的空文本节点，可选
 
 会扁平化子元素内的所有文本节点，按其在 DOM 中的顺序排列。
 
@@ -449,7 +449,7 @@ option: {
 
 - `node: Node` 参考节点。
 - `comment?: Boolean` 是否包含注释节点，可选。
-- `clean?: Boolean` 是否忽略纯空文本节点，可选。
+- `clean?: Boolean` 是否忽略空白文本节点，可选。
 
 
 ### $.prevNodes( node, comment?, clean? ): [Node]
@@ -458,7 +458,7 @@ option: {
 
 - `node: Node` 参考节点。
 - `comment?: Boolean` 是否包含注释节点，可选。
-- `clean?: Boolean` 是否忽略纯空文本节点，可选。
+- `clean?: Boolean` 是否忽略空白文本节点，可选。
 
 
 ### [$.next( el, slr, until ): Element | null](docs/$.next.md)
@@ -504,7 +504,7 @@ option: {
 获取 `node` 节点之后下一个兄弟节点：包含元素、文本节点和可选的注释节点。
 
 - `node: Node` 参考节点。
-- `clean?: Boolean` 是否忽略纯空文本节点，可选。
+- `clean?: Boolean` 是否忽略空白文本节点，可选。
 - `comment?: Boolean` 是否包含注释节点，可选。
 
 
@@ -514,7 +514,7 @@ option: {
 
 - `node: Node` 参考节点。
 - `comment?: Boolean` 是否包含注释节点，可选。
-- `clean?: Boolean` 是否忽略纯空文本节点，可选。
+- `clean?: Boolean` 是否忽略空白文本节点，可选。
 
 
 ### [$.children( el, slr ): [Element] | Element | undefined](docs/$.children.md)
@@ -536,7 +536,7 @@ option: {
 - `el: Element` 取值的目标父元素。
 - `idx: Number | String | '' | null` 子节点的位置下标（相对于取值的集合），兼容字符串数字。可选。
 - `comment?: Boolean` 是否包含注释节点，可选。
-- `clean?: Boolean` 是否忽略纯空文本节点，可选。
+- `clean?: Boolean` 是否忽略空白文本节点，可选。
 
 可指定仅返回某个具体位置的子节点，位置计数针对取值的集合（可能包含注释节点）。从0开始，支持负值从末尾算起。位置下标超出范围时返回一个 `undefined` 值。
 
@@ -562,7 +562,7 @@ option: {
 
 - `node: Node` 参考节点。
 - `comment?: Boolean` 是否包含注释节点，可选。
-- `clean?: Boolean` 是否忽略纯空文本节点，可选。
+- `clean?: Boolean` 是否忽略空白文本节点，可选。
 
 
 ### [$.parent( el, slr ): Element | null](docs/$.parent.md)
