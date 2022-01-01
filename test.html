@@ -4,7 +4,6 @@
 <meta charset="utf-8" />
 <meta http-equiv="no-cache">
 <title>tQuery test...</title>
-<script src="release/tquery.min.js"></script>
 <style>
     body {
         line-height: 2;
@@ -114,12 +113,9 @@ p.ani {
     }
 }
 </style>
-<script>
-    // $.holdReady(true);
-    $.ready(function(){
-        console.info('tQuery load and DOMContentLoaded.');
-        // console.dir(frm);
-    });
+<script type="module">
+    import $ from "./tquery.js";
+    window.$ = $;
 </script>
 </head>
 

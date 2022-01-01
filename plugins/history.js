@@ -59,7 +59,8 @@ const __Handles = {
     detach:     ev => new Remove( ev.target ),
     emptied:    ev => new Emptied( ev.target, ev.detail ),
     // 事前提取信息。
-    normalize:  ev => new Normalize( ev.target ),
+    // 自己处理，浏览器会忽略纯空文本节点。
+    normalize:  ev => ev.preventDefault() || new Normalize( ev.target ),
 
     // 事件绑定变化。
     bound:      ev => new Bound( ev.target, ...ev.detail ),
@@ -552,27 +553,30 @@ class Normalize {
 
 //
 // 相邻文本节点处理。
-// 涉及到划选区域的问题，规范化由浏览器自己执行。
+// 浏览器会忽略纯空（无值）的文本节点，因此自己处理。
 // 注记：
-// 浏览器执行normalize()后，会维持原选取范围（Range）。
-// 备忘：
-// 如下手动处理方式会导致范围变化，因此不应采用。
-// - 保留首个文本节点引用（同浏览器行为）。
-// - 移除首个文本节点之外的相邻节点。
-// - 首个文本节点赋值textContent属性为wholeText。
+// 原生DOM接口.normalize()执行后，不会影响节点上的选取（Range）。
+// 此处忽略该特性（不作延续）。
 //
 class Texts {
     /**
      * nodes为一组相邻文本节点集。
+     * 注意：创建实例即实施手动规范化。
      * @param {[Text]} nodes 节点集
      */
     constructor( nodes ) {
         let _nd0 = nodes.shift(),
-            _tx0 = _nd0.textContent;
+            _tx0 = _nd0.textContent,
+            _all = _nd0.wholeText;
 
         this._ref = _nd0;
         this._txt0 = _tx0;
         this._data = nodes;
+
+        nodes.forEach(
+            nd => nd.remove()
+        );
+        _nd0.textContent = _all;
     }
 
 
@@ -622,9 +626,7 @@ function adjacentTeam( nodes ) {
         }
         _buf.push( (_sub = [nd]) );
     }
-    // 滤掉纯空文本节点
-    // 浏览器对首个纯空文本节点忽略。
-    return _buf.map( nds => nds.filter(nd => nd.textContent) );
+    return _buf;
 }
 
 

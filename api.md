@@ -208,12 +208,12 @@ $.isXML( document.body );  // false
 > 目标控件或表单上需要绑定 `changed` 或你定制的事件来做监听处理。
 
 
-### $.textNodes( el, trim ): [Text]
+### $.textNodes( el, clean? ): [Text]
 
-提取目标元素内的文本节点集。
+提取目标元素内的全部文本节点集，包含纯空（无值）的文本节点。
 
 - `el: Element` 目标元素。
-- `trim: Boolean` 文本清理（`.trim()`）后比较（会忽略空白节点），可选
+- `clean?: Boolean` 是否忽略无值的空文本节点，可选
 
 会扁平化子元素内的所有文本节点，按其在 DOM 中的顺序排列。
 
@@ -443,26 +443,22 @@ option: {
 > 结果集会保持DOM的逆向顺序（即：靠近 `el` 的元素在前）。
 
 
-### $.prevNode( node, comment?, trim? ): Node
+### $.prevNode( node, clean?, comment? ): Node
 
 获取 `node` 节点之前一个兄弟节点：包含元素、文本节点和可选的注释节点。
 
 - `node: Node` 参考节点。
+- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 - `comment?: Boolean` 是否包含注释节点，可选。
-- `trim?: Boolean` 对文本节点是否清理后判断（忽略纯空白文本），可选。
-
-传递 trim 为真可以忽略纯空白文本节点。
 
 
-### $.prevNodes( node, comment?, trim? ): [Node]
+### $.prevNodes( node, clean?, comment? ): [Node]
 
 获取 `node` 节点之前的兄弟节点集：包含元素、文本节点和可选的注释节点。
 
 - `node: Node` 参考节点。
+- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 - `comment?: Boolean` 是否包含注释节点，可选。
-- `trim?: Boolean` 对文本节点是否清理后判断（忽略纯空白文本），可选。
-
-传递 trim 为真可以忽略纯空白文本节点。
 
 
 ### [$.next( el, slr, until ): Element | null](docs/$.next.md)
@@ -503,26 +499,22 @@ option: {
 始终会返回一个数组，如果最开始的下一个元素就匹配或为 `null`，会返回一个空数组。匹配测试函数接口为：`function( el:Element, i:Number ): Boolean`，`i` 为后续元素顺序计数（从 `el` 开始计数为 `0`）。
 
 
-### $.nextNode( node, comment?, trim ): Node
+### $.nextNode( node, clean?, comment? ): Node
 
 获取 `node` 节点之后下一个兄弟节点：包含元素、文本节点和可选的注释节点。
 
 - `node: Node` 参考节点。
+- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 - `comment?: Boolean` 是否包含注释节点，可选。
-- `trim?: Boolean` 对文本节点是否清理后判断（忽略纯空白文本），可选。
-
-传递 trim 为真可以忽略纯空白文本节点。
 
 
-### $.nextNodes( node, comment?, trim ): [Node]
+### $.nextNodes( node, clean?, comment? ): [Node]
 
 获取 `node` 节点之后的兄弟节点集：包含元素、文本节点和可选的注释节点。
 
 - `node: Node` 参考节点。
+- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 - `comment?: Boolean` 是否包含注释节点，可选。
-- `trim?: Boolean` 对文本节点是否清理后判断（忽略纯空白文本），可选。
-
-传递 trim 为真可以忽略纯空白文本节点。
 
 
 ### [$.children( el, slr ): [Element] | Element | undefined](docs/$.children.md)
@@ -537,21 +529,21 @@ option: {
 允许直接指定位置下标可能更高效，这样就避免了使用位置选择器过滤，并且会直接返回一个元素。
 
 
-### [$.contents( el, idx, comment?, trim ): [Node] | Node | undefined](docs/$.contents.md)
+### [$.contents( el, idx, clean?, comment? ): [Node] | Node | undefined](docs/$.contents.md)
 
 获取 `el` 元素的内容，包含其中的子元素、文本节点和可选的注释节点。
 
 - `el: Element` 取值的目标父元素。
 - `idx: Number | String | '' | null` 子节点的位置下标（相对于取值的集合），兼容字符串数字。可选。
+- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 - `comment?: Boolean` 是否包含注释节点，可选。
-- `trim?: Boolean` 对文本节点是否清理后判断（忽略纯空白文本），可选。
 
 可指定仅返回某个具体位置的子节点，位置计数针对取值的集合（可能包含注释节点）。从0开始，支持负值从末尾算起。位置下标超出范围时返回一个 `undefined` 值。
 
 空串的 `idx` 实参是一个特殊值，表示取内部的纯文本（非空）节点。
 如果需要包含注释节点（实参 `comment` 为 `true`），而又不需要指定 `idx` 的值，可设置 `idx` 为 `null` 占位。
 
-传递 `trim` 为真可以忽略内容全部为空白（如换行、空格等）的文本节点，因此计数也不包含。
+传递 `clean` 为真可以忽略内容为空白（无值）的文本节点，因此计数也不包含。
 
 
 ### [$.siblings( el, slr ): [Element](docs/$.siblings.md)
@@ -564,15 +556,13 @@ option: {
 可用 `slr` 进行匹配过滤，匹配者入选。`el` 需要存在一个父元素，否则兄弟的逻辑不成立，抛出异常。
 
 
-### $.siblingNodes( node, comment?, trim? ): [Node]
+### $.siblingNodes( node, clean?, comment? ): [Node]
 
 获取 `node` 节点的兄弟节点集。包含元素、文本节点和可选的注释节点。
 
 - `node: Node` 参考节点。
+- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 - `comment?: Boolean` 是否包含注释节点，可选。
-- `trim?: Boolean` 对文本节点是否清理后判断（忽略纯空白文本），可选。
-
-传递 trim 为真可以忽略纯空白文本节点。
 
 
 ### [$.parent( el, slr ): Element | null](docs/$.parent.md)
@@ -787,9 +777,9 @@ option: {
 将 `el` 元素的内容解包裹提升到 `el` 原来的位置。
 
 - `el: Element` 内容被解包的容器元素。
-- `clean: Boolean` 是否清理返回集（清除空白文本节点和注释节点）。
+- `clean: Boolean` 是否清理返回集（清除无值的空文本节点）。
 
-元素所包含的全部内容（包括注释节点）会一并提升。可以传递 `clean` 为真来清除返回集内的注释节点和纯空白的文本节点。
+元素所包含的全部内容（包括注释节点和空文本节点）会一并提升。可以传递 `clean` 为真来清除返回集内的空文本（无值的）节点。
 
 > **注：**
 > 传递 `clean` 为真仅是对返回集进行清理（友好），没有更多的含义。
@@ -809,21 +799,21 @@ option: {
 清空 `el` 元素的内容，包括元素、文本节点和注释节点等全部内容。
 
 - `el: Element` 内容将被清除的容器元素。
-- `clean: Boolean` 是否清理返回集（清除空白文本节点和注释节点）。
+- `clean: Boolean` 是否清理返回集（清除空文本节点）。
 
 返回被清空的子节点集（全部内容）。仅对元素类型有效，传递其它非法实参返回该实参本身。
 
 > **注：**
-> 传递 `clean` 为真仅是对返回集进行清理，不会影响 `empty` 清空全部内容的逻辑。
+> 传递 `clean` 为真仅是对返回集进行清理，不影响 `empty` 清空全部内容的逻辑。
 
 
-### [$.normalize( el, depth? ): Element](docs/$.normalize.md)
+### [$.normalize( el, ): Element](docs/$.normalize.md)
 
 对元素 `el` 的内容执行规范化（normalize），即合并内容中的相邻文本节点。
 
 - `el: Element` 执行操作的容器元素。
 
-这是元素原生同名接口的简单封装，但提供了可选的定制事件通知机制。
+这是元素原生同名接口的简单封装，但提供了可选的定制事件通知机制。**注意**：浏览器会将规范化后的文本设置在首个**非空**文本节点上。
 
 
 ### [$.clone( node, event, deep?, eventdeep? ): Node](docs/$.clone.md)
