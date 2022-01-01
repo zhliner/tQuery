@@ -1146,12 +1146,12 @@ Object.assign( tQuery, {
      * 获取前一个节点。
      * 传递clean为真可以忽略空文本节点。
      * @param  {Node} node 起始节点
-     * @param  {Boolean} clean 排除空文本（无值）节点，可选
      * @param  {Boolean} comment 是否包含注释，可选
+     * @param  {Boolean} clean 排除空文本（无值）节点，可选
      * @return {Node|null}
      */
-    prevNode( node, clean, comment ) {
-        return _sibling2( node, filterFunc(clean, comment), 'previousSibling' );
+    prevNode( node, comment, clean ) {
+        return _sibling2( node, filterFunc(comment, clean), 'previousSibling' );
     },
 
 
@@ -1159,17 +1159,17 @@ Object.assign( tQuery, {
      * 获取起始节点之前的兄弟节点。
      * 仅包含元素、文本节点和可能的注释节点。
      * @param  {Node} node 起始节点
-     * @param  {Boolean} clean 排除空文本（无值）节点，可选
      * @param  {Boolean} comment 包含注释节点，可选
+     * @param  {Boolean} clean 排除空文本（无值）节点，可选
      * @return {[Node]}
      */
-    prevNodes( node, clean, comment ) {
+    prevNodes( node, comment, clean ) {
         return _siblingAll(
             node,
             null,
             'previousSibling'
         )
-        .filter( filterFunc(clean, comment) );
+        .filter( filterFunc(comment, clean) );
     },
 
 
@@ -1218,12 +1218,12 @@ Object.assign( tQuery, {
      * 获取下一个节点。
      * 传递clean为真可以忽略空文本节点。
      * @param  {Node} node 起始节点
-     * @param  {Boolean} clean 排除空文本（无值）节点，可选
      * @param  {Boolean} comment 是否包含注释，可选
+     * @param  {Boolean} clean 排除空文本（无值）节点，可选
      * @return {Node|null}
      */
-    nextNode( node, clean, comment ) {
-        return _sibling2( node, filterFunc(clean, comment), 'nextSibling' );
+    nextNode( node, comment, clean ) {
+        return _sibling2( node, filterFunc(comment, clean), 'nextSibling' );
     },
 
 
@@ -1231,17 +1231,17 @@ Object.assign( tQuery, {
      * 获取起始节点之后的兄弟节点。
      * 仅包含元素、文本节点和可能的注释节点。
      * @param  {Node} node 起始节点
-     * @param  {Boolean} clean 排除空文本（无值）节点，可选
      * @param  {Boolean} comment 包含注释节点，可选
+     * @param  {Boolean} clean 排除空文本（无值）节点，可选
      * @return {[Node]}
      */
-    nextNodes( node, clean, comment ) {
+    nextNodes( node, comment, clean ) {
         return _siblingAll(
             node,
             null,
             'nextSibling'
         )
-        .filter( filterFunc(clean, comment) );
+        .filter( filterFunc(comment, clean) );
     },
 
 
@@ -1274,12 +1274,12 @@ Object.assign( tQuery, {
      * - idx 空串表示仅获取内部纯文本节点。
      * @param  {Element} el 容器元素
      * @param  {Number|null} idx 子节点位置（从0开始），可选
-     * @param  {Boolean} clean 排除空文本（无值）节点，可选
      * @param  {Boolean} comment 包含注释节点，可选
+     * @param  {Boolean} clean 排除空文本（无值）节点，可选
      * @return {[Node]|Node}
      */
-    contents( el, idx, clean, comment ) {
-        let _proc = filterFunc( clean, comment ),
+    contents( el, idx, comment, clean ) {
+        let _proc = filterFunc( comment, clean ),
             _nds = Arr( el.childNodes ).filter( _proc );
 
         if ( idx || idx === 0 ) {
@@ -1315,17 +1315,17 @@ Object.assign( tQuery, {
      * 仅包含元素、文本节点和可能的注释节点。
      * 传递 clean 为真可以忽略空文本节点。
      * @param  {Node} node 当前节点
-     * @param  {Boolean} clean 排除空文本（无值）节点，可选
      * @param  {Boolean} comment 包含注释节点
+     * @param  {Boolean} clean 排除空文本（无值）节点，可选
      * @return {[Node]}
      */
-    siblingNodes( node, clean, comment ) {
+    siblingNodes( node, comment, clean ) {
         let _nodes = Arr( node.parentNode.childNodes );
 
         _nodes.splice(
             _nodes.indexOf(node), 1
         );
-        return _nodes.filter( filterFunc(clean, comment) );
+        return _nodes.filter( filterFunc(comment, clean) );
     },
 
 
@@ -5760,10 +5760,10 @@ function masterNodeClean( node ) {
  * 注记：
  * 有时候节点间会有一些纯空（无值）的文本节点，
  * 浏览器有时候会自动忽略它们（如.normalize()操作）。
- * @param {Boolean} clean 排除空文本（无值）节点
  * @param {Boolean} comment 包含注释节点
+ * @param {Boolean} clean 排除空文本（无值）节点
  */
-function filterFunc( clean, comment ) {
+function filterFunc( comment, clean ) {
     if ( comment ) {
         return clean ? usualNodeClean : usualNode;
     }

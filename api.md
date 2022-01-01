@@ -443,22 +443,22 @@ option: {
 > 结果集会保持DOM的逆向顺序（即：靠近 `el` 的元素在前）。
 
 
-### $.prevNode( node, clean?, comment? ): Node
+### $.prevNode( node, comment?, clean? ): Node
 
 获取 `node` 节点之前一个兄弟节点：包含元素、文本节点和可选的注释节点。
 
 - `node: Node` 参考节点。
-- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 - `comment?: Boolean` 是否包含注释节点，可选。
+- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 
 
-### $.prevNodes( node, clean?, comment? ): [Node]
+### $.prevNodes( node, comment?, clean? ): [Node]
 
 获取 `node` 节点之前的兄弟节点集：包含元素、文本节点和可选的注释节点。
 
 - `node: Node` 参考节点。
-- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 - `comment?: Boolean` 是否包含注释节点，可选。
+- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 
 
 ### [$.next( el, slr, until ): Element | null](docs/$.next.md)
@@ -499,7 +499,7 @@ option: {
 始终会返回一个数组，如果最开始的下一个元素就匹配或为 `null`，会返回一个空数组。匹配测试函数接口为：`function( el:Element, i:Number ): Boolean`，`i` 为后续元素顺序计数（从 `el` 开始计数为 `0`）。
 
 
-### $.nextNode( node, clean?, comment? ): Node
+### $.nextNode( node, comment?, clean? ): Node
 
 获取 `node` 节点之后下一个兄弟节点：包含元素、文本节点和可选的注释节点。
 
@@ -508,13 +508,13 @@ option: {
 - `comment?: Boolean` 是否包含注释节点，可选。
 
 
-### $.nextNodes( node, clean?, comment? ): [Node]
+### $.nextNodes( node, comment?, clean? ): [Node]
 
 获取 `node` 节点之后的兄弟节点集：包含元素、文本节点和可选的注释节点。
 
 - `node: Node` 参考节点。
-- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 - `comment?: Boolean` 是否包含注释节点，可选。
+- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 
 
 ### [$.children( el, slr ): [Element] | Element | undefined](docs/$.children.md)
@@ -529,14 +529,14 @@ option: {
 允许直接指定位置下标可能更高效，这样就避免了使用位置选择器过滤，并且会直接返回一个元素。
 
 
-### [$.contents( el, idx, clean?, comment? ): [Node] | Node | undefined](docs/$.contents.md)
+### [$.contents( el, idx, comment?, clean? ): [Node] | Node | undefined](docs/$.contents.md)
 
 获取 `el` 元素的内容，包含其中的子元素、文本节点和可选的注释节点。
 
 - `el: Element` 取值的目标父元素。
 - `idx: Number | String | '' | null` 子节点的位置下标（相对于取值的集合），兼容字符串数字。可选。
-- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 - `comment?: Boolean` 是否包含注释节点，可选。
+- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 
 可指定仅返回某个具体位置的子节点，位置计数针对取值的集合（可能包含注释节点）。从0开始，支持负值从末尾算起。位置下标超出范围时返回一个 `undefined` 值。
 
@@ -556,13 +556,13 @@ option: {
 可用 `slr` 进行匹配过滤，匹配者入选。`el` 需要存在一个父元素，否则兄弟的逻辑不成立，抛出异常。
 
 
-### $.siblingNodes( node, clean?, comment? ): [Node]
+### $.siblingNodes( node, comment?, clean? ): [Node]
 
 获取 `node` 节点的兄弟节点集。包含元素、文本节点和可选的注释节点。
 
 - `node: Node` 参考节点。
-- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 - `comment?: Boolean` 是否包含注释节点，可选。
+- `clean?: Boolean` 是否忽略纯空文本节点，可选。
 
 
 ### [$.parent( el, slr ): Element | null](docs/$.parent.md)
