@@ -742,7 +742,7 @@ Object.assign( tQuery, {
      * }
      * @param  {String|Object} data 样式代码或配置对象
      * @param  {Element} next 参考元素，可选
-     * @return {Element|Promise} 样式元素或承诺对象
+     * @return {Element|Promise<Element>} 样式元素或承诺对象
      */
     style( data, next, doc = Doc ) {
         if ( typeof data == 'string' ) {
@@ -6115,12 +6115,13 @@ function cleanMap( list, handle ) {
  * @return {Number}
  */
 function siblingNth( el, slr ) {
+    if ( !slr ) {
+        return [...el.chindren].indexOf(el) + 1;
+    }
     let _n = 1;
 
     while ( (el = el.previousElementSibling) ) {
-        if ( !slr || $is(el, slr) ) {
-            _n ++;
-        }
+        $is( el, slr ) && _n++;
     }
     return _n;
 }
