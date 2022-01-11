@@ -6116,7 +6116,8 @@ function cleanMap( list, handle ) {
  */
 function siblingNth( el, slr ) {
     if ( !slr ) {
-        return [...el.chindren].indexOf(el) + 1;
+        // 兼容文档片段
+        return [...el.parentNode.children].indexOf(el) + 1;
     }
     let _n = 1;
 
