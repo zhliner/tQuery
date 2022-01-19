@@ -208,14 +208,15 @@ $.isXML( document.body );  // false
 > 目标控件或表单上需要绑定 `changed` 或你定制的事件来做监听处理。
 
 
-### $.textNodes( el, none? ): [Text]
+### $.textNodes( el, none?, clean ): [Text]
 
 提取目标元素内的全部文本节点集，包含纯空（无值）的文本节点。
 
 - `el: Element` 目标元素。
-- `none?: Boolean` 是否忽略无值的空文本节点，可选
+- `none?: Boolean` 是否忽略无值的空文本节点，可选。
+- `clean?: Boolean` 是否清除（忽略）值为纯空白的文本节点，可选。
 
-会扁平化子元素内的所有文本节点，按其在 DOM 中的顺序排列。
+最后会扁平化子元素内的所有文本节点，返回一个一维节点数组，顺序为在 DOM 中的自然顺序。
 
 
 ### [$.serialize( form, names ): [Array2]](docs/$.serialize.md)

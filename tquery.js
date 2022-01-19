@@ -891,22 +891,23 @@ Object.assign( tQuery, {
      * 内部所有的文本节点会被扁平化为一个数组。
      * @param  {Element} el 目标元素
      * @param  {Boolean} none 忽略无值的空文本节点，可选
+     * @param  {Boolean} clean 忽略纯空白值的文本节点，可选
      * @return {[Text]} 文本节点集
      */
-    textNodes( el, none ) {
+    textNodes( el, none, clean ) {
         let _buf = [];
 
         for ( const nd of el.childNodes ) {
             let _t = nd.nodeType;
 
             if ( _t === 1 ) {
-                _buf.push( ...tQuery.textNodes(nd) );
+                _buf.push( ...tQuery.textNodes(nd, none, clean) );
             }
             else if ( _t === 3 && (!none || nd.textContent) ) {
                 _buf.push( nd );
             }
         }
-        return _buf;
+        return clean ? _buf.filter( nd => nd.textContent.trim() ) : _buf;
     },
 
 
