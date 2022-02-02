@@ -1294,7 +1294,7 @@ elo: {
 - `$.click( el ): Element`: 模拟用户对元素的点击。
 - `$.blur( el ): Element`: 让元素失去焦点。
 - `$.focus( el ): Element`: 让元素获得焦点。
-- `$.select( el ): Element`: 对于可输入文本的控件，让文本被选中。
+- `$.select( el, self? ): Element|Range`: 对于可输入文本的控件，让文本被选中。
 - `$.load( el ): Element`: 载入元素引用的媒体文件，主要适用 `<video>` 和 `<audio>` 元素。
 - `$.play( el ): Element`: 媒体继续播放，适用元素同上。
 - `$.pause( el ): Element`: 媒体播放暂停，适用元素同上。
@@ -1304,7 +1304,7 @@ elo: {
 
 对于单元素版，实现上就是在元素上简单的调用而已。对于集合版，遵循通常一致的逻辑：对集合内每一个元素分别调用。
 
-如果不是为了取值，返回目标元素自身（即实参 `el`）。
+如果不是为了取值（`.scroll`）或特别的返回值（`.select`），返回目标元素自身（即实参 `el`）。
 
 
 ## 集合专用
@@ -1538,14 +1538,14 @@ $.dataName('-abc-def-xxx');  // 'abcDefXxx'
 ```
 
 
-### $.slr( tag, attr, val?, op? ): String
+### [$.slr( tag, attr, val?, op? ): String](docs/$.slr.md)
 
 根据选择器的各个组成部分构造一个完整的 `标签[特性]` 选择器。
 
 - `tag: String` 标签名。
 - `attr?: String` 特性名，可选。
 - `val?: String|null` 特性值，可选。明确传递 `null` 表示无属性部分。
-- `op?: String` 匹配方式（`~ | * ^ $`），可选。
+- `op?: String` 匹配方式（`~|*^$`），可选。
 
 支持 `data-` 系特性名的简写形式。
 

@@ -37,13 +37,13 @@
         Sizzle('p>b', p)          => []
         p.querySelectorAll('p>b') => [<b>]
     说明：
-        querySelectorAll 拥有上下文元素自身的父级限定能力。
         Sizzle 选择器不包含上下文元素自身的匹配检查。
+        querySelectorAll 匹配测试包含上下文元素自身（p）。
 
-    实现：
-        支持直系子元素选择器 '>xxx' 且可并列（如：'>a, >b'），同 Sizzle。
+    本实现：
+        支持直接子元素选择器 '>xxx' 且可并列（如：'>a, >b'），同 Sizzle。
         tQuery.find('>a, >b', p) => [<b>, <a>]
-        支持上下文元素限定（同 querySelectorAll）。
+        支持上下文元素自身限定（同 querySelectorAll）。
         tQuery.find('p>b', p)    => [<b>]
 
 
@@ -3467,18 +3467,21 @@ tQuery.scroll = function( el, pair ) {
 /**
  * 选取动作定制。
  * 兼容普通元素（包括未设置contenteditable的元素）。
- * @param {Element} el 目标元素
+ * @param  {Element} el 目标元素
+ * @param  {Boolean} self 选取元素自身，可选
+ * @return {Element|Range}
  */
-tQuery.select = function( el ) {
+tQuery.select = function( el, self ) {
     if ( 'select' in el ) {
-        return el.select();
+        return el.select(), el;
     }
     let _sel = Win.getSelection(),
         _rng = el.ownerDocument.createRange();
 
     _sel.removeAllRanges();
     _sel.addRange( _rng );
-    _rng.selectNodeContents( el );
+
+    return ( self ? _rng.selectNode(el) : _rng.selectNodeContents(el) ) || _rng;
 }
 
 
