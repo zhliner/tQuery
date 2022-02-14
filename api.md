@@ -368,13 +368,14 @@ option: {
 对集合 `list` 中的成员用 `fltr` 匹配过滤，返回一个匹配成员的新数组。
 
 - `list: [Element] | [Value]` 目标集。
-- `fltr: String | Array | Function | Value` 匹配过滤的条件，可以是一个选择器、数组、测试函数或一个具体的值。
+- `fltr: String | Array | Function | Value | RegExp` 匹配过滤的条件，可以是一个选择器、数组、测试函数或一个具体的值。
 
 这是一个通用的匹配过滤方法，可用于任意值的集合。各种匹配条件的含义：
 
 - 字符串表示CSS选择器，仅适用于元素集。
 - 数组表示成员包含，可用于任意值的集合。
 - 测试函数表示自定义判断，返回真时为匹配。
+- 正则表达式测试节点的 textContent 是否匹配或字符串成员本身是否匹配。
 - 其它值用于全等测试，相等则为匹配。
 
 
@@ -383,13 +384,14 @@ option: {
 对集合 `list` 中的成员用 `fltr` 匹配排除，返回排除匹配项之后剩余成员的新数组。
 
 - `list: [Element] | [Value]` 目标集。
-- `fltr: String | Array | Function | Value` 匹配排除条件。
+- `fltr: String | Array | Function | Value | RegExp` 匹配排除条件。
 
 类似 `$.filter()`，这也是一个通用的方法，可用于任意值的集合。各种匹配条件的含义：
 
 - 字符串表示CSS选择器，仅适用于元素集。匹配则排除。
 - 数组表示成员包含，可用于任意值的集合。包含则排除。
 - 测试函数表示自定义排除，返回真时成员被排除。
+- 正则表达式与节点的 textContent 匹配或字符串成员本身匹配测试，匹配则排除。
 - 其它值用于全等测试，相等的项被排除。
 
 
@@ -398,10 +400,10 @@ option: {
 对集合 `els` 中的元素用 `sub` 执行**包含**匹配过滤。返回一个测试成功成员的新数组。
 
 - `els: [Element]` 元素集。
-- `sub: String | Node` 用于包含测试的选择器或子节点。
+- `sub: String | Node | RegExp` 用于包含测试的选择器或子节点或正则匹配式。
 
 > **注：**<br>
-> 包含的意思是 **`sub` 作为子级节点存在，或者作为选择器可与子级元素匹配**。
+> 包含的意思是 `sub` 作为子级节点存在，或者是存在与选择器匹配的子级元素，或者是与 `sub` 正则匹配为真的成员。
 
 
 
@@ -412,8 +414,10 @@ option: {
 获取 `el` 的前一个（匹配的）兄弟元素。
 
 - `el: Element` 取值的目标源元素，不适用文本节点。
-- `slr: String | Function` 匹配测试的选择器或函数，可选。
+- `slr: String | Function | RegExp` 匹配测试的选择器或测试函数或文本匹配式，可选。
 - `until: Boolean` 是否持续测试。
+
+`slr` 支持正则表达式匹配测试目标元素的文本内容（`textContent`）。
 
 这是 `$.next()` 方法的逆向版，其它说明相同。
 
@@ -423,9 +427,11 @@ option: {
 获取 `el` 前部的全部兄弟元素。
 
 - `el: Element` 取值的目标源元素，不适用文本节点。
-- `slr: String | Function` 匹配测试的选择器或函数，可选。
+- `slr: String | Function | RegExp` 匹配测试的选择器或测试函数或文本匹配式，可选。
 
 这是 `$.nextAll()` 方法的逆向版。可用 `slr` 进行匹配过滤，匹配者入选。始终会返回一个数组，即便没有任何匹配。测试函数接口和说明同前。未传递 `slr` 时表示不执行过滤，返回全集。
+
+`slr` 支持正则表达式匹配测试目标元素的文本内容（`textContent`）。
 
 > **注：**
 > 结果集会保持DOM的逆向顺序（即：靠近 `el` 的元素在前）。
@@ -436,9 +442,11 @@ option: {
 获取 `el` 的前端兄弟元素，直到 `slr` 匹配（不包含 `slr` 匹配的元素）。
 
 - `el: Element` 取值的目标源元素，不适用文本节点。
-- `slr: String | Element | Function` 终点匹配测试的选择器或元素或测试函数，可选。
+- `slr: String | Element | Function | RegExp` 终点匹配测试的选择器或元素或测试函数或文本匹配式，可选。
 
 这是方法 `$.nextUntil` 的逆向版。始终会返回一个数组，如果最开始的前一个元素就匹配或为 `null`，会返回一个空数组。测试函数接口和说明同前。
+
+`slr` 支持正则表达式匹配测试目标元素的文本内容（`textContent`）。
 
 > **注：**
 > 结果集会保持DOM的逆向顺序（即：靠近 `el` 的元素在前）。
@@ -467,12 +475,14 @@ option: {
 获取 `el` 的下一个（匹配的）兄弟元素。
 
 - `el: Element` 开始的目标元素。
-- `slr: String | Function` 匹配测试的选择器或函数，可选。
+- `slr: String | Function | RegExp` 匹配测试的选择器或测试函数或文本匹配式，可选。
 - `until: Boolean` 是否持续测试。
 
 如果未传递 `slr`，则无条件匹配 `el` 的下一个兄弟元素。如果传递 `until` 为真，则尝试持续测试直到匹配或抵达末尾（返回 `null`），否则仅针对下一个兄弟元素。
 
 测试函数接口：`function(el:Element, i:Number): Boolean`，`i` 为顺序迭代的兄弟元素序位（`el` 处计为 `0`）。
+
+`slr` 支持正则表达式匹配测试目标元素的文本内容（`textContent`）。
 
 > **注：**
 > 比 `jQuery.next(slr)` 稍有增强，后者仅测试 `el` 的下一个兄弟元素。
@@ -483,11 +493,11 @@ option: {
 获取 `el` 的后续全部兄弟元素。
 
 - `el: Element` 取值的目标源元素，不适用文本节点。
-- `slr: String | Function` 匹配测试的选择器或函数，可选。
+- `slr: String | Function | RegExp` 匹配测试的选择器或测试函数或文本匹配式，可选。
 
 可用 `slr` 进行匹配过滤，匹配者入选。始终会返回一个数组，即便没有任何匹配（此时为一个空数组）。匹配测试函数接口为：`function( el:Element, i:Number ): Boolean`，`i` 为后续元素顺序计数（从 `el` 开始计数为 `0`）。
 
-如果未传递 `slr` 表示不执行过滤，因此会返回一个全集。
+如果未传递 `slr` 表示不执行过滤，因此会返回一个全集。`slr` 支持正则表达式匹配测试目标元素的文本内容（`textContent`）。
 
 
 ### [$.nextUntil( el, slr ): [Element]](docs/$.nextUntil.md)
@@ -495,9 +505,11 @@ option: {
 获取 `el` 的后续兄弟元素，直到 `slr` 匹配（不包含 `slr` 匹配的元素）。
 
 - `el: Element` 取值的目标源元素，不适用文本节点。
-- `slr: String | Element | Function` 终点匹配测试的选择器或元素或测试函数，可选。
+- `slr: String | Element | Function | RegExp` 终点匹配测试的选择器或元素或测试函数或文本匹配式。
 
 始终会返回一个数组，如果最开始的下一个元素就匹配或为 `null`，会返回一个空数组。匹配测试函数接口为：`function( el:Element, i:Number ): Boolean`，`i` 为后续元素顺序计数（从 `el` 开始计数为 `0`）。
+
+`slr` 支持正则表达式匹配测试目标元素的文本内容（`textContent`）。
 
 
 ### $.nextNode( node, comment?, clean? ): Node
@@ -571,9 +583,11 @@ option: {
 获取 `el` 元素的直接父元素。
 
 - `el: Element` 取值的目标元素。
-- `slr: String | Function` 测试是否匹配的选择器或自定义的测试函数，可选。
+- `slr: String | Function | RegExp` 测试是否匹配的选择器或测试函数或文本匹配式，可选。
 
 如果父元素匹配 `slr` 选择器，或自定义的测试函数返回真，则测试成功，返回该父元素，否则返回 `null`。
+
+`slr` 支持正则表达式测试父元素的文本内容（`textContent`）。
 
 
 ### [$.parents( el, slr ): [Element]](docs/$.parents.md)
@@ -581,9 +595,11 @@ option: {
 获取 `el` 元素的上级元素集。
 
 - `el: Element` 取值的目标元素。
-- `slr: String | Function` 测试是否匹配的选择器或自定义的测试函数，可选。
+- `slr: String | Function | RegExp` 是否匹配的选择器或测试函数或文本匹配式，可选。
 
 从父元素开始匹配测试，结果集保持从内向外的逐层顺序。如果 `slr` 为测试函数，接口为：`function(el:Element, i:Number): Boolean`，首个实参为上级元素自身，第二个实参为向上递进的层级计数（直接父元素为 `1`）。
+
+`slr` 支持正则表达式测试父级元素的文本内容（`textContent`）。
 
 
 ### [$.parentsUntil( el, slr ): [Element]](docs/$.parentsUntil.md)
@@ -591,9 +607,11 @@ option: {
 汇集 `el` 元素的全部上级元素，直到 `slr` 匹配（不含匹配的元素）。
 
 - `el: Element` 取值的目标元素。
-- `slr: String | Function | Element | [Element]` 测试终点匹配的选择器、或自定义的测试函数、或一个目标元素或一个元素的数组，可选。
+- `slr: String | Function | Element | [Element] | RegExp` 测试终点匹配的选择器、或自定义的测试函数、或一个目标元素或一个元素的数组或一个文本匹配式。可选。
 
 从父元素开始匹配测试，结果集保持从内向外的逐层顺序。如果 `slr` 为测试函数，接口为：`function(el:Element, i:Number): Boolean`，首个实参为上级元素自身，第二个实参为向上递进的层级计数（直接父元素为 `1`）。
+
+`slr` 支持正则表达式测试父级元素的文本内容（`textContent`）。
 
 
 ### [$.closest( el, slr ): Element | null](docs/$.closest.md)
@@ -601,11 +619,13 @@ option: {
 获取 `el` 最近的父级匹配元素。
 
 - `el: Element` 取值的目标元素。
-- `slr: String | Function | Element | [Element]` 目标匹配选择器、或自定义的测试函数、或一个目标元素或一个元素的数组，可选。
+- `slr: String | Function | Element | [Element] | RegExp` 目标匹配选择器、或自定义的测试函数、或一个目标元素或一个元素的数组或文本匹配式。
 
-向上逐级检查父级元素是否匹配，返回最先匹配的目标元素。会从 `el` 元素自身开始测试匹配（同标准 Element:closest），如果抵达 `document` 或 `DocumentFragment` 会返回 `null`。如果未传入 `slr`，匹配当前元素自身（与 Element.closest 稍有不同）。
+向上逐级检查父级元素是否匹配，返回最先匹配的目标元素。会从 `el` 元素自身开始测试匹配（同标准 `Element:closest`），如果抵达 `document` 或 `DocumentFragment` 会返回 `null`。如果未传入 `slr` 会抛出异常。
 
 如果 `slr` 是一个自定义的测试函数，接口为：`function(el:Element, i:Number): Boolean`，首个实参为递进的元素自身，第二个实参为向上递进的层级计数（当前元素时为 `0`）。
+
+`slr` 支持正则表达式测试父级元素的文本内容（`textContent`）。
 
 
 ### [$.offsetParent( el ): Element](docs/$.offsetParent.md)

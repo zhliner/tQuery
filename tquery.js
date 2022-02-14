@@ -1058,13 +1058,16 @@ Object.assign( tQuery, {
      *  - Array:    集合内成员在数组内，值任意。注：集合的交集。
      *  - Function: 自定义测试函数，接口：function(Value, Index, this): Boolean。
      *  - Value:    其它任意类型值，相等为匹配（===）。
+     *  - RegExp:   和元素的纯文本内容（textContent）执行匹配测试。
      * }
+     * 如果未传递fltr或为假值，返回集合自身。
+     * 因此也就不能用它来简单过滤假值本身（可用函数）。
      * @param  {[Element|Value]} list 目标集
-     * @param  {String|Array|Function|Value} fltr 匹配条件
+     * @param  {String|Array|Function|Value|RegExp} fltr 匹配条件
      * @return {[Value]} 过滤后的集合
      */
     filter( list, fltr ) {
-        return list.length ? list.filter( getFltr(fltr) ) : list;
+        return list.length && fltr ? list.filter( getFltr(fltr) ) : list;
     },
 
 
@@ -1072,13 +1075,17 @@ Object.assign( tQuery, {
      * 排除过滤。
      * - 从集合中移除匹配的成员。
      * - 自定义测试函数接口同上。
+     * 未传递排除条件表示全部排除，返回一个空集。
      * @param  {[Element|Value]} list 目标集
-     * @param  {String|Array|Function|Value} fltr 排除条件
+     * @param  {String|Array|Function|Value|RegExp} fltr 排除条件
      * @return {[Value]}
      */
     not( list, fltr ) {
         if ( list.length == 0 ) {
             return list;
+        }
+        if ( !fltr ) {
+            return [];
         }
         let _fun = getFltr( fltr );
 
@@ -1089,13 +1096,15 @@ Object.assign( tQuery, {
     /**
      * 元素包含过滤。
      * 检查集合中元素的子级元素是否可与目标匹配。
-     * 注：仅支持由元素构成的集合。
-     * @param  {[Element]} els 元素集
-     * @param  {String|Element} slr 测试目标
-     * @return {[Element]}
+     * 支持正则表达式匹配元素文本内容（textContent）。
+     * 注：
+     * 如果slr为正则表达式，成员可以是文本节点或字符串值。
+     * @param  {[Element|Text|String]} els 元素集
+     * @param  {String|Element|RegExp} slr 测试目标
+     * @return {[Element|Text|String]}
      */
     has( els, slr ) {
-        return els.length ? els.filter( hasFltr(slr) ) : els;
+        return els.length && slr ? els.filter( hasFltr(slr) ) : els;
     },
 
 
@@ -1106,7 +1115,7 @@ Object.assign( tQuery, {
      * 获取前一个兄弟元素。
      * 参数说明参考.next()。
      * @param  {Element} el 起点元素
-     * @param  {String|Function} slr 匹配选择器或测试函数，可选
+     * @param  {String|Function|RegExp} slr 匹配选择器或测试函数，可选
      * @param  {Boolean} until 持续测试
      * @return {Element|null}
      */
@@ -1122,7 +1131,7 @@ Object.assign( tQuery, {
      * 可选的用slr进行匹配过滤。
      * 注：结果集保持逆向顺序（靠近起点的元素在前）。
      * @param  {Element} el 起点元素
-     * @param  {String|Function} slr 匹配条件，可选
+     * @param  {String|Function|RegExp} slr 匹配条件，可选
      * @return {[Element]}
      */
     prevAll( el, slr ) {
@@ -1134,7 +1143,7 @@ Object.assign( tQuery, {
      * 获取前端兄弟元素，直到slr匹配（不包含匹配的元素）。
      * 注：结果集成员保持逆向顺序。
      * @param  {Element} el 起点元素
-     * @param  {String|Element|Function} slr 终止条件，可选
+     * @param  {String|Element|Function|RegExp} slr 终止条件，可选
      * @return {[Element]}
      */
     prevUntil( el, slr = '' ) {
@@ -1180,7 +1189,7 @@ Object.assign( tQuery, {
      * slr作为测试函数仅在until为真时有效。
      * 注：与 jQuery.next(slr) 行为不同。
      * @param  {Element} el 参考元素
-     * @param  {String|Function} slr 匹配选择器或测试函数，可选
+     * @param  {String|Function|RegExp} slr 匹配选择器或测试函数，可选
      * @param  {Boolean} until 持续测试
      * @return {Element|null}
      */
@@ -1195,7 +1204,7 @@ Object.assign( tQuery, {
      * 获取后续全部兄弟元素。
      * 可用slr进行匹配过滤，可选。
      * @param  {Element} el 参考元素
-     * @param  {String|Function} slr 匹配选择器，可选
+     * @param  {String|Function|RegExp} slr 匹配选择器，可选
      * @return {[Element]}
      */
     nextAll( el, slr ) {
@@ -1206,7 +1215,7 @@ Object.assign( tQuery, {
     /**
      * 获取后续兄弟元素，直到slr匹配（不包含匹配的元素）。
      * @param  {Element} el 参考元素
-     * @param  {String|Element|Function} slr 终止条件，可选
+     * @param  {String|Element|Function|RegExp} slr 终止条件，可选
      * @return {[Element]}
      */
     nextUntil( el, slr = '' ) {
@@ -1272,7 +1281,7 @@ Object.assign( tQuery, {
      * - 可以指定仅返回目标位置的一个子节点。
      * - 位置计数支持负值从末尾算起。
      * - idx 空串表示仅获取内部文本节点。
-     * @param  {Element} el 容器元素
+     * @param  {Element|DocumentFragment} el 容器元素
      * @param  {Number|null} idx 子节点位置（从0开始），可选
      * @param  {Boolean} comment 包含注释节点，可选
      * @param  {Boolean} clean 排除空白文本节点，可选
@@ -1332,17 +1341,16 @@ Object.assign( tQuery, {
     /**
      * 获取直接父元素。
      * 可用可选的选择器或测试函数检查是否匹配。
+     * slr支持正则表达式测试父元素内容匹配（textContent）。
      * @param  {Element} el 目标元素
-     * @param  {String|Function} slr 选择器或测试函数，可选
+     * @param  {String|Function|RegExp} slr 选择器或测试函数，可选
      * @return {Element|null}
      */
     parent( el, slr ) {
-        let _pel = el.parentElement;
+        let _pel = el.parentElement,
+            _fun = slr && getFltr( slr );
 
-        if ( slr && _pel ) {
-            return isFunc(slr) ? slr(_pel) : $is(_pel, slr);
-        }
-        return _pel;
+        return _fun ? _pel && _fun(_pel) : _pel;
     },
 
 
@@ -1350,18 +1358,21 @@ Object.assign( tQuery, {
      * 获取匹配的上级元素集。
      * - 可用可选的选择器或测试函数进行过滤。
      * - 自定义测试函数支持向上递进的层计数（_i）。
-     * 注：最终的顶层是<html>而不是Document/DocumentFragment。
+     * 注意：
+     * - 最终的顶层是<html>而不是Document或DocumentFragment。
+     * - 原则上slr支持正则表达式匹配父级元素的文本，
+     *   但这会导致结果集包含从匹配元素开始之上的全部上级元素。
      * @param  {Element} el 目标元素
-     * @param  {String|Function} slr 选择器或匹配测试，可选
+     * @param  {String|Function|RegExp} slr 选择器或匹配测试，可选
      * @return {[Element]}
      */
     parents( el, slr ) {
         let _buf = [],
-            _fun = getFltr(slr),
+            _fun = slr && getFltr(slr),
             _i = 0;
 
         while ( (el = el.parentElement) ) {
-            if ( _fun(el, ++_i) ) {
+            if ( !slr || _fun(el, ++_i) ) {
                 _buf.push(el);
             }
         }
@@ -1374,8 +1385,9 @@ Object.assign( tQuery, {
      * - 从父元素开始检查匹配。
      * - 不包含终止匹配的父级元素。
      * - 自定义测试函数支持向上递进的层计数（_i）。
+     * - 正则表达式匹配父级元素的文本内容（textContent）。
      * @param  {Element} el 当前元素
-     * @param  {String|Function|Element|[Element]} slr 终止匹配，可选
+     * @param  {String|Function|Element|[Element]|RegExp} slr 终止匹配，可选
      * @return {[Element]}
      */
     parentsUntil( el, slr ) {
@@ -1398,9 +1410,10 @@ Object.assign( tQuery, {
      * - 如果抵达document或DocumentFragment会返回null。
      * - 自定义匹配函数支持向上递进的层数（_i）。
      * - slr为假值时抛出异常（同Element.closest）。
+     * - slr支持正则表达式匹配元素文本内容（textContent）。
      * 注：支持从文本节点开始。
      * @param  {Node} el 起始节点
-     * @param  {String|Function|Element|[Element]} slr 匹配选择器
+     * @param  {String|Function|Element|[Element]|RegExp} slr 匹配选择器
      * @return {Element|null}
      */
     closest( el, slr = '' ) {
@@ -3488,25 +3501,27 @@ tQuery.select = function( el, self ) {
 /**
  * 获取兄弟元素。
  * 仅检查相邻元素，不匹配时返回null。
- * @param  {String|Function} slr 选择器或匹配测试函数，可选
+ * 在slr是函数时，传递的第二个实参1才有意义。
+ * @param  {String|Function|RegExp} slr 选择器或匹配测试函数，可选
  * @param  {String} dir 方向（nextElementSibling|previousElementSibling）
  * @return {Element|null}
  */
 function _sibling( el, slr, dir ) {
     let _ne = el[dir];
-    return getFltr(slr)(_ne, 1) ? _ne : null;
+    return !slr || getFltr(slr)(_ne, 1) ? _ne : null;
 }
 
 
 /**
  * 获取兄弟元素。
  * 会持续迭代直到匹配或抵达末端。
- * @param  {String|Function} slr 选择器或匹配测试函数，可选
+ * 如果slr是函数，传递的第二个实参（迭代计数）有意义。
+ * @param  {String|Function|RegExp} slr 选择器或匹配测试函数，可选
  * @param  {String} dir 方向（nextElementSibling|previousElementSibling）
  * @return {Element|null}
  */
 function _sibling2( el, slr, dir ) {
-    let _fun = getFltr(slr),
+    let _fun = slr ? getFltr(slr) : () => true,
         _i = 0;
 
     while ( (el = el[dir]) ) {
@@ -3519,13 +3534,13 @@ function _sibling2( el, slr, dir ) {
 /**
  * dir方向全部兄弟。
  * 可选的用slr进行匹配过滤。
- * @param  {String|Function} slr 匹配选择器，可选
+ * @param  {String|Function|RegExp} slr 匹配选择器，可选
  * @param  {String} dir 方向（同上）
  * @return {Array}
  */
 function _siblingAll( el, slr, dir ) {
     let _els = [],
-        _fun = getFltr( slr ),
+        _fun = slr ? getFltr(slr) : () => true,
         _i = 0;
 
     while ( (el = el[dir]) ) {
@@ -3538,13 +3553,15 @@ function _siblingAll( el, slr, dir ) {
 /**
  * dir方向兄弟元素...直到。
  * 获取dir方向全部兄弟元素，直到slr但不包含。
- * @param  {String|Element|Function} slr 终止判断，可选
+ * 注记：
+ * slr为必须，否则会因为调用假值而抛出异常。
+ * @param  {String|Element|Function|RegExp} slr 终止判断
  * @param  {String} dir 方向（同上）
  * @return {Array}
  */
 function _siblingUntil( el, slr, dir ) {
     let _els = [],
-        _fun = getFltr( slr ),
+        _fun = slr && getFltr( slr ),
         _i = 0;
 
     while ( (el = el[dir]) ) {
@@ -3739,15 +3756,18 @@ class Collector extends Array {
      * 匹配过滤（通用）。
      * 支持任意值的集合。
      * fltr为过滤条件：
-     * - String:   作为元素的CSS选择器，集合内成员必须是元素。
-     * - Array:    集合内成员在数组内，值任意。注：集合的交集。
-     * - Function: 自定义测试函数，接口：function(Value, Index, this): Boolean。
-     * - Value:    任意其它类型的值，相等即为匹配（===）。
-     * @param  {String|Array|Function|Value} fltr 匹配条件
+     * - String:    作为元素的CSS选择器，集合内成员必须是元素。
+     * - Array:     集合内成员在数组内，值任意。注：集合的交集。
+     * - Function:  自定义测试函数，接口：function(Value, Index, this): Boolean。
+     * - Value:     任意其它类型的值，相等即为匹配（===）。
+     * - RegExp:    目标元素的文本内容（textContent）匹配测试为真。
+     * 注意：
+     * 未传递匹配条件时返回当前集合自身。
+     * @param  {String|Array|Function|Value|RegExp} fltr 匹配条件
      * @return {Collector} 过滤后的集合
      */
     filter( fltr ) {
-        if ( this.length == 0 ) {
+        if ( this.length == 0 || !fltr ) {
             return this;
         }
         return new Collector( super.filter( getFltr(fltr) ), this );
@@ -3758,17 +3778,18 @@ class Collector extends Array {
      * 排除过滤（通用）。
      * - 从集合中移除匹配的元素。
      * - 自定义测试函数接口同上。
-     * @param  {String|Array|Function|Value} fltr 排除条件
+     * 如果没有排除条件，表示全部排除，返回一个空集。
+     * @param  {String|Array|Function|Value|RegExp} fltr 排除条件
      * @return {Collector}
      */
     not( fltr ) {
         if ( this.length == 0 ) {
             return this;
         }
-        let _fun = getFltr( fltr );
+        let _fun = fltr && getFltr( fltr );
 
         return new Collector(
-            super.filter( (v, i, o) => !_fun(v, i, o) ),
+            fltr ? super.filter( (v, i, o) => !_fun(v, i, o) ) : [],
             this
         );
     }
@@ -3777,12 +3798,11 @@ class Collector extends Array {
     /**
      * 元素包含过滤。
      * 检查集合中元素的子级元素是否可与目标（选择器）匹配。
-     * 注：仅支持由元素构成的集合。
-     * @param  {String|Element} slr 测试目标
+     * @param  {String|Element|RegExp} slr 测试目标
      * @return {Collector}
      */
     has( slr ) {
-        if ( this.length == 0 ) {
+        if ( this.length === 0 || !slr ) {
             return this;
         }
         return new Collector( super.filter( hasFltr(slr) ), this );
@@ -3829,10 +3849,14 @@ class Collector extends Array {
      * 移除节点集（从DOM中）。
      * - 匹配选择器 slr 的会被删除。
      * - 被移除的节点会作为一个新集合返回。
-     * @param  {String|Function} slr 过滤选择器
+     * - slr为正则表达式时，测试元素的文本内容（textContent）。
+     * @param  {String|Function|RegExp} slr 过滤选择器
      * @return {Collector} 被移除的节点集
      */
     remove( slr ) {
+        if ( !slr ) {
+            return this.map( varyRemove );
+        }
         let _fun = getFltr( slr ),
             _els = super.filter(
                 (e, i, o) => _fun(e, i, o) ? varyRemove(e) : false
@@ -4855,40 +4879,45 @@ function isFunc( obj ) {
 }
 
 
-//
-// 创建过滤器函数。
-// 返回值：function(Element): Boolean
-// @param  {String|Function|Array|Value} its 过滤表达
-// @return {Function|its}
-//
+/**
+ * 创建过滤器函数。
+ * 返回函数接口：function(Element): Boolean
+ * 如果its本身就是函数，则接口未定义。
+ * its支持正则表达式测试元素文本内容（textContent）。
+ * @param  {String|Function|Array|Value|RegExp} its 过滤表达
+ * @return {Function}
+ */
 function getFltr( its ) {
-    if ( !its ) {
-        return () => true;
-    }
     if ( isFunc(its) ) {
         return its;
     }
     if ( typeof its == 'string' ) {
-        return e => e && $is(e, its);
+        // 宽容集合，仅视为选择器。
+        return e => e && e.nodeType === 1 && $is( e, its );
+    }
+    if ( its.test ) {
+        // 成员支持节点和字符串。
+        return e => its.test( e.nodeType ? e.textContent : e );
     }
     return isArr(its) ? e => its.includes(e) : e => e === its;
 }
 
 
-//
-// 创建包含测试函数。
-// 注：仅支持字符串选择器和元素测试。
-// @param  {String|Element}
-// @return {Function}
-//
+/**
+ * 创建包含测试函数。
+ * its非字符串非节点时视为正则表达式。
+ * 如果its为正则表达式，集合成员可为字符串值。
+ * @param  {String|Element|RegExp} its 匹配条件
+ * @return {Function}
+ */
 function hasFltr( its ) {
-    if (typeof its == 'string') {
-        return e => !!tQuery.get(its, e);
+    if ( typeof its == 'string' ) {
+        return e => !!tQuery.get( its, e );
     }
-    if (its && its.nodeType) {
-        return e => $contains(e, its, true);
+    if ( its.nodeType ) {
+        return e => $contains( e, its, true );
     }
-    return () => false;
+    return e => its.test( e.nodeType ? e.textContent : e );
 }
 
 
