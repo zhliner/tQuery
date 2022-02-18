@@ -142,9 +142,9 @@ const
 
     // 检索元素或元素集。
     // 选择器支持“>”表示上下文元素限定。
-    // fn: {String} querySelector[All]
-    // @return {NodeList}
-    $query = ( slr, ctx, fn ) => subslr.test(slr) ? $sub(slr, ctx, s => ctx[fn](s)) : ctx[fn](slr || null),
+    // @param  {String} fn querySelector[All]
+    // @return {NodeList|Element}
+    $query = ( slr, ctx, fn ) => subslr.test( slr ) ? $sub( slr, ctx, s => ctx[fn](s) ) : ctx[fn]( slr ),
 
     // 单一目标。
     // slr 首字符 > 表示当前上下文父级限定。
@@ -1024,7 +1024,7 @@ Object.assign( tQuery, {
     get( slr, ctx = Doc ) {
         slr = slr || '';
         try {
-            return ctx && $one(slr.trim(), ctx);
+            return $one( slr.trim(), ctx );
         }
         catch( e ) {
             if ( !Sizzle ) throw e;
