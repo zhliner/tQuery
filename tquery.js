@@ -6587,7 +6587,7 @@ function toggleClass( el, names ) {
 
 /**
  * 元素内前插入。
- * 如果用户在事件处理器中调用了 Element.dispatchEvent()，
+ * 如果用户在事件处理器中调用了Event.preventDefault()，
  * 会取消插入操作，但依然会返回待插入数据。
  * @param  {Element} el 容器元素
  * @param  {Node|[Node]} nodes 节点数据（集）
