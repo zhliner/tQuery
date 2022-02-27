@@ -2171,10 +2171,11 @@ Object.assign( tQuery, {
      * 注意：
      * 部分样式在设置到元素上时，字符串形式会改变（如颜色值），
      * 此时要求equal可能不会如预期那样工作。
-     * @param {Element} el 目标元素
-     * @param {String} name 样式名称（单个）
-     * @param {String} val 样式值
-     * @param {Boolean} equal 是否相等比较，可选
+     * @param  {Element} el 目标元素
+     * @param  {String} name 样式名称（单个）
+     * @param  {String} val 样式值
+     * @param  {Boolean} equal 是否相等比较，可选
+     * @return {Element} el
      */
     toggleStyle( el, name, val = '', equal ) {
         let _old = el.style[ name ];

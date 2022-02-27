@@ -1018,7 +1018,7 @@ option: {
 - `el: Element` 目标元素。
 - `name: String` 目标特性，仅支持单个名称。
 - `val: Value | [Value] | Function | null` 切换对比值（对）或取值回调，可选。
-- `i: Boolean` 相等比较是否忽略大小写。
+- `i: Boolean` 相等比较是否忽略大小写，可选。
 
 如果 `val` 为简单值（非数组和非 `null`），目标特性值为有无切换（相等则为空，为空则设置）。`val` 可以是一个二元数组，其 `val[0]` 成员用于对比，`val[1]` 用于候选：如果原值与 `val[0]` 相等则设置为 `val[1]`，否则设置为 `val[0]` 自身。如果 `val` 未定义或为 `null`，则为特性名自身的有无切换。
 
@@ -1136,6 +1136,18 @@ option: {
 `name` 可以是一个名值对对象或Map实例，值依然可以是一个取值回调。取值回调接口：`function( oldval, el ): Value`。
 
 返回被操作的目标元素自身（即实参 `el`）。
+
+
+### $.toggleStyle( el, name, val, equal ): Element
+
+元素内联样式值切换。如果存在目标样式则删除之，否则为添加。
+
+- `el: Element` 目标元素。
+- `name: String` 目标样式名，仅支持单个名称。
+- `val: String` 切换值。
+- `equal: Boolean` 移除时是否作相等比较。
+
+如果传递 `equal` 为真，则只有在目标值相等时才移除。**注意**：部分样式值被浏览器设置后会改变字符串形式（如颜色），此时要求相等可能并不是你想要的。
 
 
 ### [$.offset( el, pair ): Object | Element](docs/$.offset.md)
