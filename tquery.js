@@ -703,7 +703,7 @@ Object.assign( tQuery, {
     /**
      * 插入脚本元素。
      * - 用源码构建脚本元素并插入容器元素，返回脚本元素本身。
-     * - 也可直接传递一个配置对象，返回一个Promise实例，then参数为脚本元素。
+     * - 也可直接传递一个配置对象，返回一个Promise实例，then传递脚本元素。
      * - 指定容器会保留插入的脚本元素，否则自动移除（脚本正常执行）。
      * 注记：
      * - 其它节点插入方法排除脚本源码，因此单独支持。
@@ -711,7 +711,7 @@ Object.assign( tQuery, {
      *
      * @param  {String|Object} data 脚本代码或配置对象
      * @param  {Element} box DOM容器元素，可选
-     * @return {Element|Promise} 脚本元素或承诺对象
+     * @return {Element|Promise<Element>} 脚本元素或承诺对象
      */
     script( data, box, doc = Doc ) {
         if ( typeof data == 'string' ) {
@@ -765,11 +765,12 @@ Object.assign( tQuery, {
      * 载入元素的外部资源。
      * 用于能够触发 load 事件的元素，如<img>。
      * 承诺对象的 resolve 回调由 load 事件触发，reject 回调由 error 事件触发。
-     * 注：通常需要元素插入DOM树后才会执行资源载入。
+     * 注记：
+     * 元素插入DOM树后才会执行资源载入。
      * @param  {Element} el 载入的目标元素
      * @param  {Node} next 插入参考位置（下一个节点）
      * @param  {Element} box 插入的目标容器，可选
-     * @return {Promise} 载入承诺
+     * @return {Promise<Element>} 载入承诺
      */
     loadin( el, next, box ) {
         return loadElement(el, next, box, false);
@@ -2155,6 +2156,33 @@ Object.assign( tQuery, {
             cssArrSet( el, names, val, _cso );
         } else {
             cssSets( el, names, val, _cso );
+        }
+        // 内部清理。
+        if ( !el.style.cssText ) el.removeAttribute('style');
+
+        return el;
+    },
+
+
+    /**
+     * 切换内联样式。
+     * 如果元素上存在目标名称的样式，则移除，否则添加。
+     * 如果传递equal为真，移除时需与val值比较，真时移除。
+     * 注意：
+     * 部分样式在设置到元素上时，字符串形式会改变（如颜色值），
+     * 此时要求equal可能不会如预期那样工作。
+     * @param {Element} el 目标元素
+     * @param {String} name 样式名称（单个）
+     * @param {String} val 样式值
+     * @param {Boolean} equal 是否相等比较，可选
+     */
+    toggleStyle( el, name, val = '', equal ) {
+        let _old = el.style[ name ];
+
+        if ( _old === '' ) {
+            ( val || val === 0 ) && setStyle( el, name, val );
+        } else {
+            ( !equal || _old === val ) && setStyle( el, name, '' );
         }
         // 内部清理。
         if ( !el.style.cssText ) el.removeAttribute('style');
@@ -4289,6 +4317,7 @@ elsExfn([
         'normalize',
         'toggleAttr',
         'toggleClass',
+        'toggleStyle',
         'on',
         'one',
         'off',
