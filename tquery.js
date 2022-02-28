@@ -3272,11 +3272,10 @@ tQuery.Table = Table;
 // height/width
 /////////////////////////////////////////////////
 [
-    ['height',  'Height'],
-    ['width',   'Width'],
+    'height',
+    'width',
 ]
-.forEach(function( its ) {
-    let _n = its[0];
+.forEach(function( meth ) {
     /**
      * 获取/设置元素的高宽度。
      * - 始终针对内容部分（不管box-sizing）。
@@ -3294,11 +3293,11 @@ tQuery.Table = Table;
      * @param  {Boolean} inc 是否为增量模式
      * @return {Number|Element}
      */
-    tQuery[_n] = function( el, val, inc ) {
+    tQuery[meth] = function( el, val, inc ) {
         if ( inc ) {
-            return _elemRectInc( el, _n, +val );
+            return _elemRectInc( el, meth, +val );
         }
-        let _x = _elemRect( el, _n );
+        let _x = _elemRect( el, meth );
 
         if ( val === undefined ) {
             return _x;
@@ -3306,7 +3305,7 @@ tQuery.Table = Table;
         if ( isFunc(val) ) {
             val = val.bind(el)( _x );
         }
-        return _elemRectSet( el, _n, val );
+        return _elemRectSet( el, meth, val );
     };
 });
 
