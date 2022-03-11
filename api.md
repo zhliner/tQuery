@@ -116,13 +116,14 @@ scope: Boolean  // <style>元素的一个可选属性。
 传入配置对象创建一个 `<link>` 元素时插入时，返回一个承诺对象（Promise），否则返回创建的 `<style>` 元素本身。
 
 
-### [$.loadin( el, next, box ): Promise](docs/$.loadin.md)
+### [$.loadin( data, next, box, doc:? ): Promise](docs/$.loadin.md)
 
 载入元素的外部资源（通用）。
 
-- `el: Element` 待载入资源的目标元素，比如一个 `<img>`。
+- `data: Object|Element` 创建 `<link>` 元素的属性配置对象或待载入的目标元素（如 `<img>`）。
 - `next: Node` 目标元素插入的下一个元素/节点参考。
 - `box: Element` 目标元素插入的容器元素，当无法用 `next` 指定位置时采用，可选。
+- `doc: Document` 创建 `<link>` 元素的文档对象，可选。
 
 **注意**：元素需要能够触发 `load` 和 `error` 事件。返回一个承诺对象，其中的 `resolve` 回调由 `load` 事件触发，`reject` 回调由 `error` 事件触发。
 

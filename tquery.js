@@ -281,12 +281,12 @@ const
 
     // 安全性：
     // 创建文档片段时清除的元素。
-    // 注：用户应当使用 $.script()/$.style() 接口来导入资源。
+    // 用户应当使用 $.script()/$.style() 接口来导入资源。
     clearTags = ['script', 'style', 'link'],
 
     // 安全性：
     // 创建文档片段时清除的脚本类属性。
-    // 注：用户应当使用 $.on 来绑定处理器。
+    // 用户应当使用 $.on 来绑定处理器。
     clearAttrs = ['onerror', 'onload', 'onabort'],
 
     // 表单控件值序列化。
@@ -762,18 +762,23 @@ Object.assign( tQuery, {
 
 
     /**
-     * 载入元素的外部资源。
-     * 用于能够触发 load 事件的元素，如<img>。
-     * 承诺对象的 resolve 回调由 load 事件触发，reject 回调由 error 事件触发。
+     * 外部资源载入。
+     * 如果data已经是一个元素则直接插入，
+     * 否则data视为配置对象构建一个<link>元素插入。
      * 注记：
+     * 应当仅用于可触发 load 事件的元素（<img>也行）。
      * 元素插入DOM树后才会执行资源载入。
-     * @param  {Element} el 载入的目标元素
+     * @param  {Object|Element} data 载入的配置或目标元素
      * @param  {Node} next 插入参考位置（下一个节点）
      * @param  {Element} box 插入的目标容器，可选
      * @return {Promise<Element>} 载入承诺
      */
-    loadin( el, next, box ) {
-        return loadElement(el, next, box, false);
+    loadin( data, next, box, doc = Doc ) {
+        let _el = data.nodeType ?
+            data :
+            setElem( doc.createElement('link'), data );
+
+        return loadElement( _el, next, box || doc.head, false );
     },
 
 
@@ -1996,13 +2001,13 @@ Object.assign( tQuery, {
             valHooks[el.nodeName.toLowerCase()] ||
             valHooks._default;
 
-        if (value === undefined) {
-            return _hook.get(el);
+        if ( value === undefined ) {
+            return _hook.get( el );
         }
-        if (isFunc(value)) {
+        if ( isFunc(value) ) {
             value = value( _hook.get(el) );
         }
-        return _hook.set(el, value), el;
+        return _hook.set( el, value ), el;
     },
 
 
