@@ -10,6 +10,11 @@ export default {
         sourcemapExcludeSources: true,
     },
     plugins: [
-        terser()
+        terser({
+            mangle: {
+                keep_classnames: true,
+                keep_fnames: /^tQuery$/
+            }
+        })
     ]
 }
