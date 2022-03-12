@@ -106,7 +106,7 @@
 */
 
 const
-    Win = this || window,
+    Win = window,
     Doc = Win.document,
 
     // 扩展选择器支持，可选
