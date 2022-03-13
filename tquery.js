@@ -8762,7 +8762,14 @@ Object.assign( tQuery, {
      * slr:
      * 路径上元素在同级中的匹配过滤，位置以此匹配集计算。
      * 可选，默认为与父元素相同。
-     *
+     * 若传递一个数组，成员按从外到内逐一匹配过滤。
+     * 注意：
+     * end 可以是一个选择器，但需要确保匹配元素是目标的父级容器，否则终点容器会是文档本身。
+     * 如果slp并不匹配目标元素自身，则它不会包含在路径序列内。
+     * 如：
+     *      $.pathx( a, 'nav', 'li' )
+     *      假设a是<li>内的<a>子元素，则最后一个位置并不是a的位置（而是它的父元素），
+     *      因为路径序列已经滤除了<a>元素（选择器'li'）。
      * 注记：
      * 可用于辅助构造元素的定位，如大纲视图。
      * 与DOM树路径严格的节点层次不同，这可以只是逻辑上的。
@@ -8770,7 +8777,7 @@ Object.assign( tQuery, {
      * @param  {Element} el 起点元素
      * @param  {Element|String} end 终点元素或选择器，可选
      * @param  {String} slp 路径元素选择器，可选
-     * @param  {String} slr 同级参考选择器，可选
+     * @param  {String|[String]} slr 同级参考选择器，可选
      * @return {[Number]}
      */
     pathx( el, end, slp, slr = slp ) {
@@ -8781,7 +8788,10 @@ Object.assign( tQuery, {
         if ( slp ) {
             _els = _els.filter( e => $is(e, slp) );
         }
-        return _els.map( e => siblingNth(e, slr) );
+        if ( !isArr(slr) ) {
+            slr = new Array(_els.length).fill( slr );
+        }
+        return _els.map( (e, i) => siblingNth(e, slr[i]) );
     },
 
 
