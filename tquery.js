@@ -8752,28 +8752,28 @@ Object.assign( tQuery, {
 
 
     /**
-     * 获取元素的路径。
+     * 获取元素的位置路径。
      * 即每层父级匹配元素的位置下标序列。
-     * 匹配不含终点元素。
+     * 如果指定顶层终点容器根，则匹配不含终点元素本身（默认document，不含）。
+     * 位置从1开始计数，可方便构造选择器。
      * slp:
-     * 路径上父元素的匹配过滤，提供路径跨级的能力。
+     * 路径上元素的匹配过滤，提供路径跨级的能力。
      * 可选，空值与通配选择器 * 相同。
      * slr:
-     * 匹配父元素在同级中相对于slr匹配集的下标位置，
+     * 路径上元素在同级中的匹配过滤，位置以此匹配集计算。
      * 可选，默认为与父元素相同。
+     *
      * 注记：
      * 可用于辅助构造元素的定位，如大纲视图。
-     * 与DOM树严格的节点层次不同，这可以只是逻辑上的。
-     * 注意：
+     * 与DOM树路径严格的节点层次不同，这可以只是逻辑上的。
      * 如果要用于构建 nth-of-type() 选择器，slp/slr 应当只是标签名。
-     *
      * @param  {Element} el 起点元素
      * @param  {Element|String} end 终点元素或选择器，可选
      * @param  {String} slp 路径元素选择器，可选
      * @param  {String} slr 同级参考选择器，可选
      * @return {[Number]}
      */
-    paths( el, end, slp, slr = slp ) {
+    pathx( el, end, slp, slr = slp ) {
         let _els = tQuery.parentsUntil( el, end )
             .reverse()
             .concat( el );

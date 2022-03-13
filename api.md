@@ -1827,9 +1827,9 @@ $.now(true);
 ```
 
 
-### $.paths( el, end, slp, slr ): [Number]
+### $.pathx( el, end, slp, slr ): [Number]
 
-提取元素路径上各层父级元素的位置序列。位置计数从1开始，主要用于辅助构造 `nth-child()` 或 `nth-of-type()` 定位选择器。
+提取元素路径上各层级元素的位置序列。位置计数从1开始，主要用于辅助构造 `nth-child()` 或 `nth-of-type()` 定位选择器。
 
 - `el: Element` 起点元素（节点树向下末端的元素）。
 - `end: Element | String` 上层终止根元素（逆向上溯的终点根，不含）。
