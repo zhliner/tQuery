@@ -1252,7 +1252,7 @@ option: {
 
 ## 事件接口
 
-### [$.on( el, evn, slr, handle, cap? ): this](docs/$.on.md)
+### [$.on( el, evn, slr, handle, cap?, opts ): this](docs/$.on.md)
 
 在 `el` 元素（文档或窗口）上绑定 `evn` 事件的处理器 `handle`。
 
@@ -1260,14 +1260,15 @@ option: {
 - `evn: String | Object` 目标事件名（序列）或 {事件名: 处理器} 配置对象。
 - `slr: String` 委托绑定的选择器。如果不是委托方式，可传递任意假值。
 - `handle: Function | EventListener | false | null` 事件处理函数或实现了 `EventListener` 接口的对象或2个特殊值。
-- `cap: Boolean` 是否为捕获，可选。默认会智能处理：无 `slr` 时为 false，有 `slr` 时不可冒泡的事件为 true。
+- `cap: Boolean|null` 是否为捕获，可选。默认会智能处理：无 `slr` 时为 false，有 `slr` 时不可冒泡的事件为 true。`null` 与 `undefined` 效果相同。
+- `opts: Object` 额外配置选项（`{passive, signal}`），可选。
 
 实参 `evn` 支持空格分隔的多个事件名同时指定。实参 `slr` 为非空字符串时为委托绑定（`delegate`），事件冒泡到匹配该选择器的元素时触发调用。`handle` 支持两个特殊值，它们分别对应两个预定义的处理器：
 
 - `false` 表示「**停止事件默认行为**」的处理器。
 - `null` 表示「**停止事件默认行为并停止事件冒泡**」的处理器。
 
-在同一个元素上，相同 `事件名/选择器/处理器/捕获方式` 不能多次绑定（仅首次有效），这与DOM事件处理的默认行为相同。`handle` 处理器的接口：`function( ev, elo ): Value | false`，其中：`ev` 为原生事件对象，`elo` 为事件相关联元素的对象，内容如下：
+在同一个元素上，相同 `事件名/选择器/处理器/捕获方式` 仅首次绑定有效，这与DOM事件处理的默认行为相同。`handle` 处理器的接口：`function( ev, elo ): Value | false`，其中：`ev` 为原生事件对象，`elo` 为事件相关联元素的对象，内容如下：
 
 ```js
 elo: {
@@ -1281,7 +1282,7 @@ elo: {
 > **注：**<br>
 > 实现 `EventListener` 接口是指对象中包含 `.handleEvent()` 方法，其中的 `this` 为该对象自身。函数处理器内的 `this` 没有特别含义（并不指向 `elo.current`）。<br>
 > 委托选择器 `slr` 并不包含绑定事件元素自身的匹配，仅限于测试内部的子孙元素。这在限定匹配目标仅为内部元素时很有用（选择器为 `*`）。<br>
-> 作为特例，支持 `slr` 前置 `~` 字符表示选择器仅测试事件起点元素（`event.target`），此时可以匹配委托元素自身（如果它就是 `event.target` 的话）。单独的一个 `~` 表示起点必须是委托元素。<br>
+> 作为特例，支持 `slr` 前置 `~` 字符表示选择器仅测试事件起点元素（`event.target`）。单独一个 `~` 表示匹配委托元素自身（如果它就是 `event.target` 的话）。<br>
 
 
 ### [$.one( el, evn, slr, handle, cap? ): this](docs/$.one.md)

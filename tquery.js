@@ -86,12 +86,15 @@
 
     事件绑定事件
     在元素绑定或解绑之前/后触发，仅适用 tQuery.on/one 和 tQuery.off 接口。
-    如果在元素的 bind/unbind 处理器中调用了 Event.preventDefault()，会取消事件处理器的绑定/解绑。
-    bound/unbound 是绑定或解绑之后的事件通知。
+    如果在元素的 bind/unbind 处理器中调用了 Event.preventDefault()，会阻止事件处理器的绑定/解绑。
+    bound/unbound 是绑定或解绑之后的通知事件。
     开启：tQuery.config({bindevent: true})
 
-    - 绑定      bind, bound
-    - 解绑      unbind, unbound
+    - bind, bound       绑定之前/之后
+    - unbind, unbound   解绑之前/之后
+
+    说明：
+    单次处理（$.one）的自动解绑不会触发 unbind/unbound 事件。
 
 
     注记：
@@ -258,9 +261,10 @@ const
     // 像素值表示
     rpixel = /^[+-]?\d[\d.e]*px$/i,
 
-    // 并列选择器起始 > 模式
+    // 并列子级选择器（>）模式
     // 如：`>p > em, >b a`
-    // 注意！无法区分属性选择器属性值内包含的 ,> 字符序列。
+    // 注意！
+    // 无法区分属性选择器属性值内包含的 ,> 字符序列。
     subslr = /^>|,\s*>/,
 
     // 伪Tag开始字符匹配（[）
@@ -840,7 +844,7 @@ Object.assign( tQuery, {
             return to;
         }
         if ( typeof evns === 'string' ) {
-            evns = evns.trim().split(__reSpace);
+            evns = evns.trim().split( __reSpace );
         }
         return Event.clone( to, src, evns );
     },
@@ -2276,20 +2280,51 @@ Object.assign( tQuery, {
      * - handle如果是普通函数，函数内的this没有特殊含义（并不指向ev.currentTarget）。
      * - 目标元素el泛指可绑定事件处理（.addEventListener()）的节点或其它对象，
      *   包含普通元素、文本节点、Document和Window对象等。
+     * - cap为null与undefined效果相同，因此null可以作为一个占位实参，以便于传递后面的opts实参。
+     *   在opts中设置once为true无效，应当使用.one()接口。
      *
      * @param  {Element} el 目标元素
      * @param  {String|Object} evn 事件名（序列）或配置对象
      * @param  {String} slr 委托选择器
      * @param  {Function|EventListener|false|null} handle 事件处理器或特殊值
-     * @param  {Boolean} cap 是否为捕获，可选
+     * @param  {Boolean|null} cap 是否为捕获，可选
+     * @param  {Object} opts 额外配置对象（passive, signal），可选
      * @return {this}
      */
-    on( el, evn, slr, handle, cap ) {
+    on( el, evn, slr, handle, cap, opts ) {
         if ( !evn ) {
             throw new Error('need event-name');
         }
         eventBinds(
             'on',
+            el,
+            slr && slr.trim(),
+            cap,
+            ...customHandles( evn, handle ),
+            opts
+        );
+        return this;
+    },
+
+
+    /**
+     * 单次绑定。
+     * 在事件被触发（然后自动解绑）之前，off 可以移除该绑定。
+     * 注记：
+     * 上面.on()中的opts参数对单次调用意义不大故忽略。
+     * @param  {Element} el 目标元素
+     * @param  {String|Object} evn 事件名（序列）或配置对象
+     * @param  {String} slr 委托选择器
+     * @param  {Function|EventListener|false|null} handle 处理器函数或对象或特殊值
+     * @param  {Boolean} cap 是否为捕获，可选
+     * @return {this}
+     */
+    one( el, evn, slr, handle, cap ) {
+        if ( !evn ) {
+            throw new Error( 'need event-name' );
+        }
+        eventBinds(
+            'one',
             el,
             slr && slr.trim(),
             cap,
@@ -2321,31 +2356,6 @@ Object.assign( tQuery, {
             slr && slr.trim(),
             cap,
             ...customHandles( evn || '', handle )
-        );
-        return this;
-    },
-
-
-    /**
-     * 单次绑定。
-     * 在事件被触发（然后自动解绑）之前，off 可以移除该绑定。
-     * @param  {Element} el 目标元素
-     * @param  {String|Object} evn 事件名（序列）或配置对象
-     * @param  {String} slr 委托选择器
-     * @param  {Function|EventListener|false|null} handle 处理器函数或对象或特殊值
-     * @param  {Boolean} cap 是否为捕获，可选
-     * @return {this}
-     */
-    one( el, evn, slr, handle, cap ) {
-        if ( !evn ) {
-            throw new Error( 'need event-name' );
-        }
-        eventBinds(
-            'one',
-            el,
-            slr && slr.trim(),
-            cap,
-            ...customHandles( evn, handle )
         );
         return this;
     },
@@ -6351,26 +6361,23 @@ function nodesTrigger( nodes, ref, meth ) {
  *      type,       绑定事件名
  *      selector,   委托选择器
  *      handle,     事件处理器
- *      cap,        是否为捕获
- *      once,       是否为单次逻辑
+ *      opts,       绑定配置（如是否为捕获、单次等）
  * ]
- * 注：仅仅是绑定/解绑之后的通知，暂未提供绑定/解绑之前的通知。
 *  @param  {Element} el 目标元素
  * @param  {String} evn 事件名
  * @param  {String} type 绑定事件名
  * @param  {String} selector 委托选择器
- * @param  {Function|EventListener} handle 事件处理器
- * @param  {Element} cap 是否为捕获
- * @param  {Boolean} once 是否为单次逻辑
+ * @param  {Function|EventListener} handle 用户事件处理器
+ * @param  {Object} opts 是否为捕获
  * @return {Boolean|void}
  */
-function bindTrigger( el, evn, type, selector, handle, cap, once ) {
+function bindTrigger( el, evn, type, selector, handle, opts ) {
     if ( !Options.bindevent ) {
         return;
     }
     return el.dispatchEvent(
         new CustomEvent( evn, {
-            detail: [ type, selector, handle, cap, !!once ],
+            detail: [ type, selector, handle, opts ],
             bubbles: true,
             cancelable: true,
         })
@@ -7567,15 +7574,13 @@ const Event = {
     //      evname: Map{
     //          selector: Map{
     //              handle: [
-    //                  [ bound, once ],  // [0]:capture:false
-    //                  [ bound, once ]   // [1]:capture:true
-    //                  // 说明：
-    //                  // 二元数组存在[0]位表示capture为false，[1]为true
+    //                  bound,    // 实际绑定到元素的处理器
+    //                  options   // 绑定选项集 {capture, once, passive, signal}
     //              ]
     //          }
     //      }
     // }
-    // 同一个元素上“相同事件名/选择器/用户句柄”只能绑定一次。
+    // 同一个元素上“相同事件名/选择器/用户句柄/Capture”只能绑定一次。
     //
     store: new WeakMap(),
 
@@ -7655,72 +7660,58 @@ const Event = {
 
     /**
      * 绑定事件调用。
-     * @param {Element} el 目标元素
-     * @param {String} evn 事件名
-     * @param {String} slr 委托选择器
-     * @param {Function|Object} handle 用户处理函数/对象
-     * @param {Boolean} cap 是否为捕获，可选
+     * 注意：
+     * 在opts中设置once为true无效，应当使用.one()接口。
+     * @param  {Element} el 目标元素
+     * @param  {String} evn 事件名
+     * @param  {String} slr 委托选择器
+     * @param  {Function|EventListener} handle 用户处理函数/对象
+     * @param  {Boolean} cap 是否为捕获，可选
+     * @param  {Object} opts 额外配置选项，可选
+     * @return {void}
      */
-    on( el, evn, slr, handle, cap ) {
-        let [_evn, _cap] = this._evncap( evn, slr, cap ),
+    on( el, evn, slr, handle, cap, opts = {} ) {
+        let [_evn, _cfg] = this._evncap( evn, slr, cap, false, opts ),
             [_slr, _get] = this._matches( slr );
 
-        if ( this.isBound(el, _evn, _slr, handle, _cap) ||
-            // 确定会绑定才激发通知
-            bindTrigger(el, evnBind, _evn, _slr, handle, _cap) === false ) {
-            return;
-        }
-        let _bound = this.handler(handle, _get, _slr);
-
-        el.addEventListener(
-            _evn,
-            this.setBuffer( this.buffer(el, _evn, _slr), handle, _bound, _cap, false ),
-            _cap
-        );
-        bindTrigger( el, evnBound, _evn, _slr, handle, _cap );
+        this._bind( el, _evn, _slr, handle, this.handler(handle, slr, _get), _cfg );
     },
 
 
     /**
      * 单次绑定执行。
-     * 执行一次之后自动解除绑定。
-     * @param {Element} el 目标元素
-     * @param {String} evn 事件名
-     * @param {String} slr 委托选择器
-     * @param {Function|Object} handle 用户处理函数/对象
-     * @param {Boolean} cap 是否为捕获，可选
+     * 执行一次之后自动解除绑定（{once:true）。
+     * @param  {Element} el 目标元素
+     * @param  {String} evn 事件名
+     * @param  {String} slr 委托选择器
+     * @param  {Function|Object} handle 用户处理函数/对象
+     * @param  {Boolean} cap 是否为捕获，可选
+     * @return {void}
      */
     one( el, evn, slr, handle, cap ) {
-        let [_evn, _cap] = this._evncap(evn, slr, cap),
-            [_slr, _get] = this._matches(slr);
+        let [_evn, _cfg] = this._evncap( evn, slr, cap, true ),
+            [_slr, _get] = this._matches( slr );
 
-        if ( this.isBound(el, _evn, _slr, handle, _cap) ||
-            bindTrigger(el, evnBind, _evn, _slr, handle, _cap, true) === false ) {
-            return;
-        }
-        let _pool = this.buffer(el, _evn, _slr),
-            // 存储普通封装（便于clone）。
-            _bound = this.setBuffer(_pool, handle, this.handler(handle, _get, _slr), _cap, true);
-
-        el.addEventListener(
-            _evn,
-            this._onceHandler( el, _evn, _bound, _cap, _pool, slr, handle ),
-            _cap
-        );
-        bindTrigger( el, evnBound, _evn, _slr, handle, _cap, true );
+        this._bind( el, _evn, _slr, handle, this.handler(handle, slr, _get), _cfg );
     },
 
 
     /**
      * 解除事件绑定。
-     * - 解除绑定的同时会移除相应的存储记录（包括单次绑定）。
-     *   即：单次绑定在调用之前可以被解除绑定。
+     * - 解除绑定的同时会移除相应的存储记录（包括单次处理）。
+     *   即：绑定的单次处理在事件触发之前可以被解除绑定。
      * - 传递事件名为假值会解除元素全部的事件绑定。
-     * @param {Element} el 目标元素
-     * @param {String} evn 事件名
-     * @param {String|Value} slr 委托选择器，可选
-     * @param {Function|Object} handle 处理函数/对象，可选
-     * @param {Boolean} cap 是否为捕获，可选
+     * - 委托选择器slr（如果有）应当与绑定时传入的值相同（包含前置~）。
+     * 注记：
+     * 绑定的单次触发处理器可以提前解绑，并且定制 unbind 事件也可以阻止解绑。
+     * 但如果单次处理器已经执行，自动解绑不会触发 unbind 和 unbound 定制事件。
+     * 也即：unbind 可以阻止解绑，但不能阻止事件的触发和单次逻辑。
+     * @param  {Element} el 目标元素
+     * @param  {String} evn 事件名
+     * @param  {String|Value} slr 委托选择器，可选
+     * @param  {Function|Object} handle 处理函数/对象，可选
+     * @param  {Boolean} cap 是否为捕获，可选
+     * @return {void}
      */
     off( el, evn, slr, handle, cap ) {
         let _m1 = this.store.get(el);
@@ -7739,6 +7730,7 @@ const Event = {
      * 事件绑定克隆。
      * 可以传递事件名序列，只克隆相应事件名的绑定。
      * 如果没有传递事件名集，则全部事件绑定都会克隆。
+     * 也可以传递一个过滤器，用于匹配目标事件：function(evn, slr, handle): Boolean
      * @param  {Element} to  目标元素
      * @param  {Element} src 事件源元素
      * @param  {[String]|Function} evns 事件名序列或过滤回调，可选
@@ -7750,25 +7742,13 @@ const Event = {
         }
         let _fltr = this._compRecord( evns );
 
-        for (const [n, nm] of this.store.get(src)) {
-            // n:ev-name
-            for (const [s, sm] of nm) {
-                // s:selector
-                for (const [h, v2] of sm) {
-                    let [fn, c, one] = this._handleV2i( v2 );
-                    // h:handle
-                    if ( _fltr(n, s, h) && bindTrigger(to, evnBind, n, s, h, c, one) !== false ) {
-
-                        let _pool = this.buffer( to, n, s ),
-                            _call = this.setBuffer( _pool, h, fn, c, one );
-
-                        to.addEventListener(
-                            n,
-                            one ? this._onceHandler(to, n, _call, c, _pool, s, h) : _call,
-                            c
-                        );
-                        bindTrigger( to, evnBound, n, s, h, c, one );
-                    }
+        // n:ev-name
+        for ( const [n, nm] of this.store.get(src) ) {
+            // s:selector
+            for ( const [s, sm] of nm ) {
+                // h:handle
+                for ( const [h, v2] of sm ) {
+                    _fltr( n, s, h ) && this._bind( to, n, s, h, ...v2 );
                 }
             }
         }
@@ -7777,36 +7757,25 @@ const Event = {
 
 
     /**
-     * 获取记录缓存。
+     * 存储绑定记录。
      * 如果不存在中间存储区会自动创建。
      * @param  {Element} el 目标元素
      * @param  {String} evn 事件名
      * @param  {String} slr 委托选择器
-     * @return {Map} 末端存储 {handle: Array2}
-     */
-    buffer( el, evn, slr ) {
-        return this._map( this._map( this._map( this.store, el ), evn ), slr );
-    },
-
-
-    /**
-     * 设置绑定记录。
-     * 最终存储集：Map{ handle: [bound, capture, once] }。
-     * @param  {Map} pool 末端存储池
      * @param  {Function} handle 用户处理句柄
      * @param  {Function} bound 普通封装句柄
-     * @param  {Boolean} capture 是否为捕获
-     * @param  {Boolean} once 是否为单次
-     * @return {Function} bound
+     * @param  {Object} options 绑定选项集（{capture, once, ...}）
+     * @return {Function} bound 实际绑定的处理器
      */
-    setBuffer( pool, handle, bound, capture, once ) {
-        pool.set(
-            handle,
-            [
-                !capture && [ bound, once ],
-                capture && [ bound, once ]
-            ]
-        );
+    buffer( el, evn, slr, handle, bound, options ) {
+        this._map(
+            this._map(
+                this._map( this.store, el ),
+                evn
+            ),
+            slr
+        ).set( handle, [bound, options] );
+
         return bound;
     },
 
@@ -7820,12 +7789,12 @@ const Event = {
      * @return {Boolean}
      */
     isBound( el, evn, slr, handle, cap ) {
-        let _m1 = this.store.get(el),
-            _m2 = _m1 && _m1.get(evn),
-            _m3 = _m2 && _m2.get(slr),
-            _v2 = _m3 && _m3.get(handle);
+        let _m1 = this.store.get( el ),
+            _m2 = _m1 && _m1.get( evn ),
+            _m3 = _m2 && _m2.get( slr ),
+            _v2 = _m3 && _m3.get( handle );
 
-        return !!_v2 && !!_v2[ +cap ];
+        return !!_v2 && _v2[1].capture === cap;
     },
 
 
@@ -7834,7 +7803,7 @@ const Event = {
      * 如果未指定事件名，则检索全部注册项，返回一个对象：{
      *      evn: [Function|EventListener]
      * }
-     * 如果slr前置了~标识符，紧跟标识符之后不应有空白。
+     * 如果指定slr（非假），其形式应当与绑定时传入值相同。
      * @param  {Element} el 绑定事件元素
      * @param  {String} evn 事件名（单个），可选
      * @param  {String} slr 用户选择器串，可选
@@ -7858,7 +7827,7 @@ const Event = {
      * @return {Boolean}
      */
     willevent( evn ) {
-        return this.nativeEvents.has(evn);
+        return this.nativeEvents.has( evn );
     },
 
 
@@ -7890,22 +7859,21 @@ const Event = {
     /**
      * 构造事件处理句柄。
      * - 返回的函数由事件实际触发调用：func(ev)
-     * - 每次返回的是一个新的处理函数。
      * - 支持EventListener接口，此时this为接口实现对象自身。
      * 注意：
      * 用户传入的事件处理器函数内的this没有特殊含义（并不指向event.currentTarget）。
      *
      * @param  {Function} handle 用户调用
-     * @param  {Function} current 获取当前元素的函数
      * @param  {String|null} slr 选择器串（可含前置~标识符）
-     * @return {Function} 处理器函数
+     * @param  {Function} current 获取当前元素的函数
+     * @return {Function} 实际绑定的事件处理函数
      */
-    handler( handle, current, slr ) {
+    handler( handle, slr, current ) {
         if ( !isFunc(handle) ) {
             // EventListener
-            handle = handle.handleEvent.bind(handle);
+            handle = handle.handleEvent.bind( handle );
         }
-        return this.wrapper.bind(this, handle, current, slr);
+        return this.wrapper.bind( this, handle, slr, current );
     },
 
 
@@ -7919,7 +7887,7 @@ const Event = {
      * @param  {Event} ev 原生事件对象
      * @return {Boolean|null}
      */
-    wrapper( handle, current, slr, ev ) {
+    wrapper( handle, slr, current, ev ) {
         let _cur = current( ev, slr ),
             _elo = _cur && {
                 target:     ev.target,
@@ -7928,8 +7896,6 @@ const Event = {
                 delegate:   ev.currentTarget,
             }
         // 需要调用元素的原生方法完成浏览器逻辑。
-        // 注记：
-        // 明确的返回值便于._onceHandler匹配判断。
         return _elo && handle(ev, _elo) !== false && !this._methodCall(ev, _elo.current);
     },
 
@@ -7938,56 +7904,55 @@ const Event = {
      * 元素上方法调用。
      * 主要为trigger激发原生方法的DOM逻辑完成。
      * 如：form:submit, video:load
-     * 如果用户处理器调用了Event.preventDefault()，不会执行调用，返回false。
+     * 如果用户处理器调用了Event.preventDefault()，则不会执行调用，返回false。
+     * 仅部分方法可执行，如果不合法或不存在，也返回false。
+     * 如果方法正常执行，返回方法自身的返回值。
      * @param  {Event} ev 事件对象
      * @param  {Element} el 目标元素
-     * @return {true|void}
+     * @return {false|void}
      */
     _methodCall( ev, el ) {
         let _evn = ev.type,
             _fun = el[ _evn ];
 
-        return ev.defaultPrevented ||
-            this.elementFulfill.has(_evn) &&
-            _fun && _fun.bind(el)( ...(isArr(ev.detail) ? ev.detail : [ev.detail]) );
+        return !ev.defaultPrevented &&
+            this.elementFulfill.has( _evn ) &&
+            !!_fun &&
+            _fun.bind(el)( ...(isArr(ev.detail) ? ev.detail : [ev.detail]) );
     },
 
 
     /**
-     * 构造单次调用处理器。
-     * 执行之后会自动移除绑定和配置存储。
-     * 也有解绑和解绑完成通知，外部依然可以阻止解绑实施。
+     * 绑定事件处理器。
+     * 事件名和选择器已经绑定选项集已经处理和规范化。
      * @param  {Element} el 目标元素
      * @param  {String} evn 事件名
-     * @param  {Function} bound 普通封装处理器
-     * @param  {Boolean} cap 是否为捕获
-     * @param  {Map} pool 末端存储器
-     * @param  {String} slr 委托选择器
-     * @param  {Function} handle 用户处理器
-     * @return {Function} 封装处理器（单次逻辑）
+     * @param  {String|null} slr 委托选择器
+     * @param  {Function} get 获取目标元素的函数
+     * @param  {Function|EventListener} handle 用户处理器
+     * @param  {Function} bound 实际绑定的处理器
+     * @param  {Object} opts 绑定选项集
+     * @return {void}
      */
-    _onceHandler( el, evn, bound, cap, pool, slr, handle ) {
-        return function caller(...args) {
-            // 是否拦截指示
-            let _pass = bindTrigger(el, evnUnbind, evn, slr, handle, cap, true) !== false;
-            try {
-                // 是否匹配指示
-                if ( _pass ) _pass = bound( ...args ) !== null;
-            }
-            finally {
-                if ( _pass ) {
-                    pool.delete( handle );
-                    el.removeEventListener( evn, caller, cap );
-                    bindTrigger( el, evnUnbound, evn, slr, handle, cap, true );
-                }
-            }
-        };
+    _bind( el, evn, slr, handle, bound, opts ) {
+        if ( this.isBound(el, evn, slr, handle, opts.capture) ||
+            // 确定会绑定。
+            bindTrigger(el, evnBind, evn, slr, handle, opts) === false ) {
+            return;
+        }
+        el.addEventListener(
+            evn,
+            this.buffer( el, evn, slr, handle, bound, opts ),
+            opts
+        );
+        bindTrigger( el, evnBound, evn, slr, handle, opts );
     },
 
 
     /**
-     * 获取匹配选择器和匹配句柄。
+     * 获取匹配句柄。
      * 主要用于区分委托模式下的匹配类型（起点匹配或搜寻匹配）。
+     * 返回的选择器非假时原样保留，假值则规范为null。
      * @param  {String} slr 选择器
      * @return {[String, Function]} 选择器和匹配函数
      */
@@ -8001,7 +7966,7 @@ const Event = {
 
     /**
      * 构造检测过滤函数集。
-     * 过滤函数接口：function(evn, slr, handle): Boolean。
+     * 过滤函数接口：function(evn, slr, handle, cap): Boolean。
      * 三个检查条件可任意组合。
      * slr明确地传递null仅匹配非委托绑定，
      * 如果需要匹配任意委托和非委托绑定，slr可传递非null假值。
@@ -8020,11 +7985,11 @@ const Event = {
         if ( handle ) {
             _fns.push( (n, s, h) => h === handle );
         }
-        if ( cap !== undefined ) {
+        if ( cap != undefined ) {
             cap = !!cap;
             _fns.push( (n, s, h, c) => c === cap );
         }
-        return _fns.length === 1 ? _fns[0] : (n, s, h, c) => _fns.every(f => f(n, s, h, c));
+        return _fns.length === 1 ? _fns[0] : (n, s, h, c) => _fns.every( f => f(n, s, h, c) );
     },
 
 
@@ -8073,11 +8038,9 @@ const Event = {
         for (let [n, m2] of map1) {
             for (const [s, m3] of m2) {
                 for (const [h, v2] of m3) {
-                    let [fn, c, one] = this._handleV2i( v2 );
-
-                    if ( bindTrigger(el, evnUnbind, n, s, h, c, one) !== false ) {
-                        el.removeEventListener( n, fn, c );
-                        bindTrigger( el, evnUnbound, n, s, h, c, one );
+                    if ( bindTrigger(el, evnUnbind, n, s, h, v2[1]) !== false ) {
+                        el.removeEventListener( n, v2[0], v2[1].capture );
+                        bindTrigger( el, evnUnbound, n, s, h, v2[1] );
                     }
                 }
             }
@@ -8103,14 +8066,13 @@ const Event = {
         for (let [n, m2] of map1) {
             for (const [s, m3] of m2) {
                 for (const [h, v2] of m3) {
-                    let [fn, c, one] = this._handleV2i( v2 );
-                    // 匹配之后才通知
-                    if ( _fltr(n, s, h, c) &&
-                        bindTrigger(el, evnUnbind, n, s, h, c, one) !== false ) {
-
-                        el.removeEventListener( n, fn, c );
+                    let [fn, cfg] = v2;
+                    if ( _fltr(n, s, h, cfg.capture) &&
+                        // 匹配之后通知
+                        bindTrigger(el, evnUnbind, n, s, h, cfg) !== false ) {
+                        el.removeEventListener( n, fn, cfg.capture );
                         m3.delete( h );
-                        bindTrigger( el, evnUnbound, n, s, h, c, one );
+                        bindTrigger( el, evnUnbound, n, s, h, cfg );
                     }
                 }
                 if ( m3.size == 0 ) m2.delete( s );
@@ -8121,35 +8083,31 @@ const Event = {
 
 
     /**
-     * 提取末端存储值对。
-     * 即处理 handle 键对应的值对数组。
-     * @param  {[Array2]} v2 值对数组
-     * @return [bound, capture, once]
-     */
-    _handleV2i( v2 ) {
-        let _v2 = v2[0] || v2[1];
-        return [ _v2[0], !v2[0], _v2[1] ];
-    },
-
-
-    /**
      * 获取事件名与捕获模式。
      * - 根据是否委托返回调整后的值。
-     * 注：仅在委托模式下才调整事件名和捕获模式。
+     * 注：
+     * 仅在委托模式下才调整事件名和捕获模式。
+     * cap传递null时，表示由库实现智能选择（根据是否冒泡）。
      * @param  {String} evn 原始事件名
      * @param  {String} slr 选择器
-     * @param  {Boolean|void} cap 是否为捕获，可选
-     * @return {[String, Boolean]} [事件名，是否为捕获]
+     * @param  {Boolean|null} cap 是否为捕获
+     * @param  {Boolean} one 是否绑定为单次调用
+     * @param  {Object} opts 额外配置对象（passive, signal），可选
+     * @return {[String, Object]} [事件名，配置对象]
      */
-    _evncap( evn, slr, cap ) {
+    _evncap( evn, slr, cap, one, opts = {} ) {
         if ( slr ) {
             evn = this.sendon[evn] || evn;
         }
-        if ( cap === undefined ) {
+        if ( cap == null ) {
             // 默认规则
             cap = slr ? !!this.captures[ evn ] : false;
         }
-        return [ evn, !!cap ];
+        return [
+            evn,
+            // 明确罗列，避免用户误用。
+            { capture: !!cap, once: one, passive: opts.passive, signal: opts.signal }
+        ];
     },
 
 
@@ -8157,23 +8115,22 @@ const Event = {
      * 起点目标匹配。
      * 仅用于委托模式下的选择器匹配。
      * 用于优化委托模式下的单一检测（不再向上尝试匹配）。
-     * 注记：
-     * 存储中选择器保留前置~字符，使得.off()可以定位解绑。
      * @param  {Event} ev 事件对象
-     * @param  {String} slr 选择器串（前置~字符）
+     * @param  {String} slr 选择器串（含前置~）
      * @return {Element|null}
      */
     _target( ev, slr ) {
         let _its = ev.target,
             _box = ev.currentTarget;
 
+        // 移除前置~
         slr = slr.substring(1).trim();
 
         if ( !subslr.test(slr) ) {
             return targetElem( _box, _its, slr );
         }
         try {
-            hackAttr(_box, hackFix);
+            hackAttr( _box, hackFix );
             return $is( _its, hackSelector(_box, slr, hackFix) ) ? _its : null;
         }
         finally {
@@ -8303,22 +8260,25 @@ function customHandle( handle ) {
  * 事件批量绑定/解绑。
  * - 用于事件的on/off/one批量操作。
  * - evn支持“事件名序列: 处理函数”配置对象，此时slr依然有效（全局适用）。
+ * 注：
+ * opts 额外选项仅适用 .on() 绑定，上级接口已约束。
  * @param  {String} type 操作类型（on|off|one）
  * @param  {Element} el  目标元素
  * @param  {String} slr  委托选择器
  * @param  {Boolean} cap 是否为捕获，可选
  * @param  {String|Object} evn 事件名（序列）或配置对象
  * @param  {Function} handle 事件处理函数
+ * @param  {Object} opts 额外配置选项，可选
  * @return {void}
  */
-function eventBinds( type, el, slr, cap, evn, handle ) {
-    if (! el) {
-        throw new Error(`el is ${el}.`);
+function eventBinds( type, el, slr, cap, evn, handle, opts ) {
+    if ( !el ) {
+        throw new Error( `el is ${el}.` );
     }
-    if (typeof evn == 'string') {
-        return evnsBatch( type, el, evn, slr, handle, cap );
+    if ( typeof evn == 'string' ) {
+        return evnsBatch( type, el, evn, slr, handle, cap, opts );
     }
-    for ( let [n, f] of Object.entries(evn) ) evnsBatch(type, el, n, slr, f, cap);
+    for ( let [n, f] of Object.entries(evn) ) evnsBatch(type, el, n, slr, f, cap, opts);
 }
 
 
@@ -8331,10 +8291,13 @@ function eventBinds( type, el, slr, cap, evn, handle ) {
  * @param {String} slr  委托选择器
  * @param {Function} handle 事件处理函数
  * @param  {Boolean} cap 是否为捕获，可选
+ * @param  {Object} opts 额外配置选项，可选
  */
-function evnsBatch( type, el, evn, slr, handle, cap ) {
-    evn.split(__reSpace)
-        .forEach( name => Event[type](el, name, slr, handle, cap) );
+function evnsBatch( type, el, evn, slr, handle, cap, opts ) {
+    evn.split( __reSpace )
+    .forEach(
+        name => Event[type]( el, name, slr, handle, cap, opts )
+    );
 }
 
 

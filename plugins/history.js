@@ -344,14 +344,14 @@ class Bound {
      * @param {String} evn 目标事件名
      * @param {String} slr 委托选择器
      * @param {Function|EventListener} handle 事件处理器（用户）
-     * @param {Boolean} cap 是否为捕获
+     * @param {Object} opts 绑定配置集
      */
-    constructor( el, evn, slr, handle, cap ) {
+    constructor( el, evn, slr, handle, opts ) {
         this._el = el;
         this._evn = evn;
         this._slr = slr;
         this._handle = handle;
-        this._cap = cap;
+        this._cap = opts.capture;
     }
 
 
@@ -387,24 +387,27 @@ class Unbound {
      * @param {String} evn 目标事件名
      * @param {String} slr 委托选择器
      * @param {Function|EventListener} handle 事件处理器（用户）
-     * @param {Boolean} cap 是否为捕获
-     * @param {Boolean} once 是否为单次绑定
+     * @param {Object} opts 绑定配置集
      */
-    constructor( el, evn, slr, handle, cap, once ) {
+    constructor( el, evn, slr, handle, opts ) {
         this._el = el;
         this._evn = evn;
         this._slr = slr;
         this._handle = handle;
-        this._cap = cap;
-        this._once = once;
+        this._cap = opts.capture;
+        this._opts = opts;
     }
 
 
     back() {
-        let _fn = this._once ?
-            'one' :
-            'on';
-        $[_fn]( this._el, this._evn, this._slr, this._handle, this._cap );
+        if ( this._opts.once ) {
+            $.one( this._el, this._evn, this._slr, this._handle, this._cap );
+        }
+        else {
+            // ._opts 多余成为无害。
+            $.on( this._el, this._evn, this._slr, this._handle, this._cap, this._opts );
+        }
+
     }
 
 
