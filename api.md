@@ -1254,7 +1254,7 @@ option: {
 
 ### [$.on( el, evn, slr, handle, cap?, opts ): this](docs/$.on.md)
 
-在 `el` 元素（文档或窗口）上绑定 `evn` 事件的处理器 `handle`。
+在 `el` 元素（或文档或窗口）上绑定 `evn` 事件的处理器 `handle`。
 
 - `el: Element | Document | Window` 绑定到的目标元素、文档或窗口。
 - `evn: String | Object` 目标事件名（序列）或 {事件名: 处理器} 配置对象。
@@ -1287,10 +1287,17 @@ elo: {
 
 ### [$.one( el, evn, slr, handle, cap? ): this](docs/$.one.md)
 
-在 `el` 上绑定一个单次执行的处理器（执行后自动解绑）。各个参数的含义与 `$.on()` 接口相同。
+在 `el` 上绑定一个单次执行的处理器（触发后自动解绑）。各个参数的含义与 `$.on()` 接口相同。
 
-> **注**：<br>
-> 在事件触发（然后自动解绑）之前，可用 `$.off()` 主动移除该绑定。
+- `el: Element | Document | Window` 绑定到的目标元素、文档或窗口。
+- `evn: String | Object` 目标事件名（序列）或 {事件名: 处理器} 配置对象。
+- `slr: String` 委托绑定的选择器。如果不是委托方式，可传递任意假值。
+- `handle: Function | EventListener | false | null` 事件处理函数或实现了 `EventListener` 接口的对象或2个特殊值。
+- `cap: Boolean|null` 是否为捕获，可选。默认会智能处理：无 `slr` 时为 false，有 `slr` 时不可冒泡的事件为 true。`null` 与 `undefined` 效果相同。
+
+> **注意：**<br>
+> 在事件触发（然后自动解绑）之前，可用 `$.off()` 主动移除该绑定。<br>
+> 事件触发后会无条件解绑。如果是委托绑定，选择器不匹配时只是不触发事件处理而已，解绑依然会执行（浏览器自身行为）。<br>
 
 
 ### [$.off( el, evn, slr, handle, cap? ): this](docs/$.off.md)
