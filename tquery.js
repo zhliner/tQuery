@@ -258,9 +258,6 @@ const
     // HTML节点标志。
     xhtml = /HTML$/i,
 
-    // 像素值表示
-    rpixel = /^[+-]?\d[\d.e]*px$/i,
-
     // 并列子级选择器（>）模式
     // 如：`>p > em, >b a`
     // 注意！
@@ -2263,7 +2260,7 @@ Object.assign( tQuery, {
      *
      * 选择器slr：
      * - 支持前置一个 ~ 字符表示仅测试起点元素是否匹配。
-     * - 单独的一个 ~ 字符也是有效的，表示事件起点必须是绑定元素本身。
+     * - 单独的一个 ~ 字符也是有效的，表示事件起点必须是绑定元素自身。
      *
      * 处理器接口：function( ev, elo ): false|Any
      * ev: Event 原生的事件对象。
@@ -2308,8 +2305,12 @@ Object.assign( tQuery, {
 
 
     /**
-     * 单次绑定。
+     * 绑定单次触发。
      * 在事件被触发（然后自动解绑）之前，off 可以移除该绑定。
+     * 注意：
+     * - 事件触发之后即会解绑（浏览器行为）。
+     * - 如果是委托绑定，可能选择器并未匹配，因此事件处理器也不会被调用。
+     * - 如果不确定选择器会匹配且希望确保处理器被调用，应当使用.on()然后在处理器中手动解绑。
      * 注记：
      * 上面.on()中的opts参数对单次调用意义不大故忽略。
      * @param  {Element} el 目标元素
@@ -3294,33 +3295,33 @@ tQuery.Table = Table;
     /**
      * 获取/设置元素的高宽度。
      * - 始终针对内容部分（不管box-sizing）。
-     * - 设置值可包含任意单位，纯数值视为像素单位。
+     * - 仅支持像素数值（Number）。
      * - 传递val为null或一个空串会删除样式（与.css保持一致）。
-     * - 获取时返回数值。便于数学计算。
-     * - 增量设置时，val仅支持像素值，且元素高宽样式有数值值（非auto）。
+     * - val若为函数，接口：function( val:Number ): Number
      * 注记：
      * box-sizing {
      *      content-box: css:height = con-height（默认）
      *      border-box:  css:height = con-height + padding + border
      * }
      * @param  {Element} el 目标元素
-     * @param  {String|Number|Function} val 设置值
+     * @param  {Number|Function} val 设置值
      * @param  {Boolean} inc 是否为增量模式
      * @return {Number|Element}
      */
     tQuery[meth] = function( el, val, inc ) {
-        if ( inc ) {
-            return _elemRectInc( el, meth, +val );
-        }
-        let _x = _elemRect( el, meth );
+        let _cso = getStyles( el ),
+            _old = boxSizing[_cso.boxSizing].get( el, meth, meth, _cso );
 
         if ( val === undefined ) {
-            return _x;
+            return _old;
         }
         if ( isFunc(val) ) {
             val = val.bind(el)( _x );
         }
-        return _elemRectSet( el, meth, val );
+        if ( inc ) {
+            val += _old;
+        }
+        return _elemRectSet( el, meth, +val, _cso );
     };
 });
 
@@ -3429,58 +3430,23 @@ function _rectElem( el, type, name, margin ) {
 
 
 /**
- * 获取元素尺寸（height/width）。
- * @param  {Element} el  目标元素
- * @param  {String} name 尺寸名称（height|width）
- * @return {Number}
- */
-function _elemRect( el, name ) {
-    let _cso = getStyles(el);
-    return boxSizing[ _cso.boxSizing ].get(el, name, name, _cso);
-}
-
-
-/**
  * 设置元素尺寸（height|width）。
- * - 支持非像素单位设置。
  * @param  {Element} el  目标元素
  * @param  {String} name 设置类型/名称
- * @param  {String|Number} val 尺寸值
+ * @param  {Number} val 尺寸值
+ * @param  {CSSStyleDeclaration} cso 计算样式对象
  * @return {Element} el
  */
-function _elemRectSet( el, name, val ) {
-    let _cso = getStyles(el),
-        _pb2 = boxSizing[ _cso.boxSizing ].set(el, name, val, _cso);
-
-    // border-box下非像素设置时，补充padding和border值。
-    if ( _pb2 ) {
-        el.style[name] = parseFloat(_cso[name]) + _pb2 + 'px';
+function _elemRectSet( el, name, val, cso ) {
+    if ( isNaN(val) ) {
+        throw new Error( `${name} value is not a Number.` );
     }
+    boxSizing[ _cso.boxSizing ].set( el, name, val, cso );
+
     if ( !el.style.cssText ) {
         // 内部清理。
-        el.removeAttribute('style');
+        el.removeAttribute( 'style' );
     }
-    return el;
-}
-
-
-/**
- * 按增量设置。
- * 仅适用高宽样式有数值（非auto）的元素。
- * 注记：
- * 未设置样式的内联元素的高宽值通常为auto，
- * 如果需要设置它们，可先正常设置一次初始值。
- * @param  {Element} el 目标元素
- * @param  {String} name 设置名称（width|height）
- * @param  {Number} val 增量值
- * @return {Element} el
- */
-function _elemRectInc( el, name, val ) {
-    let _old = getStyles(el)[ name ];
-
-    // NaN会自然无效
-    el.style[ name ] = `${parseFloat(_old) + val}px`;
-
     return el;
 }
 
@@ -4991,18 +4957,6 @@ function arrayArgs( obj ) {
         return [obj];
     }
     return obj[Symbol.iterator] ? obj : [obj];
-}
-
-
-/**
- * 像素值转换数值。
- * - 像素单位转为纯数值。
- * - 非像素和数值时返回 null。
- * @param  {String|Number} val
- * @return {Number|null}
- */
-function pixelNumber( val ) {
-    return isNumeric(val) || rpixel.test(val) ? parseFloat(val) : null;
 }
 
 
@@ -7486,10 +7440,10 @@ const boxSizing = {
          * 设置高宽值。
          * @param {Element} el 目标元素
          * @param {String} name 设置类型名（height|width）
-         * @param {Number} val 设置的值
+         * @param {Number} val 像素值
          */
         set: ( el, name, val ) => {
-            el.style[name] = isNumeric(val) ? val+'px' : val;
+            el.style[ name ] = `${val}px`;
         },
     },
 
@@ -7509,16 +7463,11 @@ const boxSizing = {
          * - 先直接设置宽高样式，返回需要补充的内边距和边框尺寸。
          * - 返回非0值表示需要二次设置。
          * 注：非像素单位难以转换计算，故此简化。
-         * @param  {String} name 设置类型名（height|width）
-         * @param  {String|Number} val
-         * @return {Number}
+         * @param {String} name 设置类型名（height|width）
+         * @param {Number} val 像素值
          */
         set: ( el, name, val, cso ) => {
-            let _pb2 = boxPadding[name](cso) + boxBorder[name](cso),
-                _num = pixelNumber(val);
-
-            el.style[name] = _num ? (_num + _pb2 + 'px') : val;
-            return _num ? 0 : _pb2;
+            el.style[ name ] = `${val + boxPadding[name](cso) + boxBorder[name](cso)}px`;
         },
     }
 };
@@ -7569,20 +7518,20 @@ function rectSize( el, name ) {
 const Event = {
     //
     // 绑定记录。
-    // 与绑定事件处理器的当前元素相关联：WeakMap{ Element: Map }
-    // element:Map{
-    //      evname: Map{
-    //          selector: Map{
-    //              handle: Map{
-    //                  capture: [
-    //                      bound,    // 实际绑定到元素的处理器
-    //                      options   // 绑定选项集 {capture, once, passive, signal}
-    //                  ]
-    //              }
-    //          }
+    // 与绑定事件处理器的当前元素相关联：
+    // WeakMap{
+    // Element: Map {
+    //      capture:evname|seltctor: Map{
+    //          handle: [
+    //              bound,    // 实际绑定到元素的处理器
+    //              options   // 绑定选项集 {capture, once, passive, signal}
+    //          ]
     //      }
+    //      // capture:   false|true        => 0|1
+    //      // selector:  null|''|false|0   => ""
     // }
-    // 同一个元素上“相同事件名/选择器/用户句柄/Capture”只能绑定一次。
+    // 事件名中不能包含管道字符（|）。
+    // 同一个元素上“相同事件名/选择器/用户句柄/Capture”只会绑定一次。
     //
     store: new WeakMap(),
 
@@ -7703,7 +7652,7 @@ const Event = {
      * - 解除绑定的同时会移除相应的存储记录（包括单次处理）。
      *   即：绑定的单次处理在事件触发之前可以被解除绑定。
      * - 传递事件名为假值会解除元素全部的事件绑定。
-     * - 委托选择器slr（如果有）应当与绑定时传入的值相同（包含前置~）。
+     * - slr传递null仅针对非委托绑定，其它假值则匹配委托和非委托两者。
      * 注记：
      * 绑定的单次触发处理器可以提前解绑，并且定制 unbind 事件也可以阻止解绑。
      * 但如果单次处理器已经执行，自动解绑不会触发 unbind 和 unbound 定制事件。
@@ -7716,16 +7665,16 @@ const Event = {
      * @return {void}
      */
     off( el, evn, slr, handle, cap ) {
-        let _m1 = this.store.get( el ),
+        let _map = this.store.get( el ),
             _fltr;
-        if ( !_m1 ) return;
+        if ( !_map ) return;
 
         if ( !evn ) {
             _fltr = () => true;
         } else {
             _fltr = this._filter( evn, slr, handle, cap );
         }
-        this._removeBound( el, _m1, _fltr ) && this.store.delete( el );
+        this._removeBound( el, _map, _fltr ) && this.store.delete( el );
     },
 
 
@@ -7746,17 +7695,13 @@ const Event = {
         }
         let _fltr = this._compRecord( evns );
 
-        // n:ev-name
-        for ( const [n, nm] of this.store.get(src) ) {
-            // s:selector
-            for ( const [s, sm] of nm ) {
-                // h:handle
-                for ( const [h, cm] of sm ) {
-                    // _:capture
-                    for ( const [_, v2] of cm ) {
-                        _fltr( n, s, h, v2[1] ) && this._bind( to, n, s, h, ...v2 );
-                    }
-                }
+        // cns: capture:evname|seltctor
+        for ( const [cns, m2] of this.store.get(src) ) {
+            let [evn, slr] = this._nameSlr( cns );
+
+            // h:handle
+            for ( const [h, v2] of m2 ) {
+                _fltr( evn, slr, h, v2[1] ) && this._bind( to, n, s, h, ...v2 );
             }
         }
         return to;
@@ -7777,14 +7722,12 @@ const Event = {
     buffer( el, evn, slr, handle, bound, options ) {
         this._map(
             this._map(
-                this._map(
-                    this._map( this.store, el ),
-                    evn
-                ),
-                slr
+                this.store,
+                el
             ),
-            handle
-        ).set( options.capture, [bound, options] );
+            `${+options.capture}:${evn}|${slr}`
+        )
+        .set( handle, [bound, options] );
 
         return bound;
     },
@@ -7800,33 +7743,47 @@ const Event = {
      */
     isBound( el, evn, slr, handle, cap ) {
         let _m1 = this.store.get( el ),
-            _m2 = _m1 && _m1.get( evn ),
-            _m3 = _m2 && _m2.get( slr ),
-            _m4 = _m3 && _m3.get( handle );
+            _m2 = _m1 && _m1.get( `${+cap}:${evn}|${slr}` );
 
-        return !!_m4 && _m4.has( cap );
+        return !!_m2 && _m2.has( handle );
     },
 
 
     /**
-     * 获取元素上绑定的原生用户处理器。
-     * 如果未指定事件名，则检索全部注册项，返回一个对象：{
-     *      evn: [Function|EventListener]
-     * }
-     * 如果指定slr（非假），其形式应当与绑定时传入值相同。
+     * 获取原生用户处理器&配置集。
+     * 可以传递事件名和选择器进行过滤。
+     * 如果转到slr为null，则仅仅针对非委托绑定。
+     * 返回值：[{
+     *      type:     String    // 事件名
+     *      selector: String    // 委托选择器
+     *      handle:   Function  // 原始处理器（或 EventListener）
+     *      options:  Object    // 绑定配置集
+     * }]
      * @param  {Element} el 绑定事件元素
-     * @param  {String} evn 事件名（单个），可选
+     * @param  {String} evn 事件名，可选
      * @param  {String} slr 用户选择器串，可选
-     * @return {Object|[Function|EventListener]|undefined} 用户调用/处理器集
+     * @return {[Object]} 用户处理器&配置集
      */
     handles( el, evn, slr ) {
-        let _m1 = this.store.get( el );
-        if ( !_m1 ) return;
+        let _map = this.store.get( el ),
+            _fun = this._filter( evn, slr ),
+            _buf = [];
 
-        if ( evn ) {
-            return evnHandler( _m1, evn, slr );
+        if ( _map ) {
+            for ( const [cns, m2] of _map ) {
+                let [evn, slr] = this._nameSlr( cns );
+
+                for ( const [h, v2] of m2 ) {
+                    _buf.push({
+                        type:     evn,
+                        selector: slr,
+                        handle:   h,
+                        options:  v2[1]
+                    });
+                }
+            }
         }
-        return [..._m1.keys()].reduce( (o, n) => (o[n] = evnHandler(_m1, n, slr), o), {} );
+        return _buf.filter( o => _fun(o.type, o.selector) );
     },
 
 
@@ -7923,7 +7880,7 @@ const Event = {
             _elo = _cur && {
                 target:     ev.target,
                 current:    _cur,
-                selector:   slr || null,
+                selector:   slr || null,  // "" => null
                 delegate:   ev.currentTarget,
             }
         // 需要调用元素的原生方法完成浏览器逻辑。
@@ -7949,10 +7906,8 @@ const Event = {
     wrapperOne( handle, cap, caller, slr, type, current, ev ) {
         this.store
             .get( ev.currentTarget )
-            .get( type )
-            .get( slr )
-            .get( handle )
-            .delete( cap );
+            .get( `${+cap}:${type}|${slr}` )
+            .delete( handle );
 
         return this.wrapper( caller, slr, current, ev );
     },
@@ -7985,7 +7940,7 @@ const Event = {
      * 事件名和选择器已经绑定选项集已经处理和规范化。
      * @param  {Element} el 目标元素
      * @param  {String} evn 事件名
-     * @param  {String|null} slr 委托选择器
+     * @param  {String} slr 委托选择器
      * @param  {Function} get 获取目标元素的函数
      * @param  {Function|EventListener} handle 用户处理器
      * @param  {Function} bound 实际绑定的处理器
@@ -8010,15 +7965,30 @@ const Event = {
     /**
      * 获取匹配句柄。
      * 主要用于区分委托模式下的匹配类型（起点匹配或搜寻匹配）。
-     * 返回的选择器非假时原样保留，假值则规范为null。
+     * 返回的选择器假值时转为空串，便于构造键名。
      * @param  {String} slr 选择器
      * @return {[String, Function]} 选择器和匹配函数
      */
     _matches( slr ) {
         if ( !slr ) {
-            return [ null, this._current ];
+            return [ "", this._current ];
         }
         return [ slr, slr[0] === this.originPrefix ? this._target : this._delegate ];
+    },
+
+
+    /**
+     * 提取事件名和选择器。
+     * 空串选择器转为 null 以规范外部匹配，
+     * 参见：this._filter()。
+     * @param  {String} key 事件存储键（capture:evname|seltctor）
+     * @return {[String, String|null]}
+     */
+    _nameSlr( key ) {
+        // 0:evname|selector
+        // 1:evname|selector
+        let _i = key.indexOf( '|' );
+        return [ key.substring(2, _i), key.substring(_i+1) || null ];
     },
 
 
@@ -8035,8 +8005,11 @@ const Event = {
      * @return {[Function]} 过滤函数集
      */
     _filter( evn, slr, handle, cap ) {
-        let _fns = [ n => n == evn ];
+        let _fns = [];
 
+        if ( evn ) {
+            _fns.push( n => n == evn );
+        }
         if ( slr || slr === null ) {
             _fns.push( (n, s) => s === slr );
         }
@@ -8044,8 +8017,7 @@ const Event = {
             _fns.push( (n, s, h) => h === handle );
         }
         if ( cap != undefined ) {
-            cap = !!cap;
-            _fns.push( (n, s, h, c) => c === cap );
+            _fns.push( (n, s, h, c) => c === !!cap );
         }
         return _fns.length === 1 ? _fns[0] : (n, s, h, c) => _fns.every( f => f(n, s, h, c) );
     },
@@ -8053,6 +8025,7 @@ const Event = {
 
     /**
      * 事件原始记录匹配器。
+     * 过滤函数接口：function(evname, slr, handle, options): Boolean
      * @param  {[String]|Function} evns 匹配事件名集或过滤函数
      * @return {Function} 匹配函数
      */
@@ -8072,12 +8045,12 @@ const Event = {
     /**
      * 获取目标键的存储集。
      * 如果目标存储集不存在则新建。
-     * @param  {Map} pool 存储集
-     * @param  {String|Function|EventListener} key 存储键
+     * @param  {Map|WeakMap} pool 存储集
+     * @param  {String|Function|EventListener|Element} key 存储键
      * @return {Map} 目标存储集
      */
     _map( pool, key ) {
-        let _v = pool.get(key);
+        let _v = pool.get( key );
 
         if ( !_v ) {
             pool.set( key, _v = new Map() );
@@ -8090,30 +8063,28 @@ const Event = {
      * 移除绑定。
      * 解绑事件处理器并清理内部存储。
      * 注记：
-     * 用户可能阻止解绑，因此即便是移除全部（无evn），也可能不会解绑。
+     * 用户可能阻止解绑，因此即便是无evn指定，也可能不会解绑。
      * @param  {Element} el 目标元素
-     * @param  {Map} map1 一级存储集
+     * @param  {Map} map 一级存储集
      * @param  {Function} fltr 过滤匹配函数
      * @return {Boolean} 是否全部清除
      */
-    _removeBound( el, map1, fltr ) {
-        for ( let [n, m2] of map1 ) {
-            for ( const [s, m3] of m2 ) {
-                for ( const [h, m4] of m3 ) {
-                    for ( const [c, v2] of m4 ) {
-                        if ( fltr(n, s, h, c) && bindTrigger(el, evnUnbind, n, s, h, v2[1]) !== false ) {
-                            el.removeEventListener( n, v2[0], c );
-                            m4.delete( c );
-                            bindTrigger( el, evnUnbound, n, s, h, v2[1] );
-                        }
-                    }
-                    if ( m4.size == 0 ) m3.delete( h );
+    _removeBound( el, map, fltr ) {
+        for ( let [cns, m2] of map ) {
+            let [evn, slr] = this._nameSlr( cns );
+
+            for ( const [h, v2] of m2 ) {
+                let [fn, cfg] = v2;
+
+                if ( fltr(evn, slr, h, cfg.capture) && bindTrigger(el, evnUnbind, evn, slr, h, cfg) !== false ) {
+                    el.removeEventListener( evn, fn, cfg.capture );
+                    m2.delete( h );
+                    bindTrigger( el, evnUnbound, evn, slr, h, cfg );
                 }
-                if ( m3.size == 0 ) m2.delete( s );
             }
-            if ( m2.size == 0 ) map1.delete( n );
+            if ( m2.size === 0 ) map.delete( cns );
         }
-        return map1.size === 0;
+        return map.size === 0;
     },
 
 
@@ -8333,26 +8304,6 @@ function evnsBatch( type, el, evn, slr, handle, cap, opts ) {
     .forEach(
         name => Event[type]( el, name, slr, handle, cap, opts )
     );
-}
-
-
-/**
- * 提取事件名对应的原始处理器集。
- * @param  {Map} map 存储集（evname:Map）
- * @param  {String} evn 事件名
- * @param  {String} slr 用户选择器串，可选
- * @return {[Function|EventListener]|void} 用户调用/处理器集
- */
-function evnHandler( map, evn, slr ) {
-    let _m2 = map.get( evn );
-    if ( !_m2 ) return;
-
-    if ( !slr ) {
-        return [..._m2.values()].map( m3 => [...m3.keys()] ).flat();
-    }
-    let _m3 = _m2.get( slr );
-
-    return _m3 && [ ..._m3.keys() ];
 }
 
 
