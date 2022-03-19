@@ -7650,31 +7650,24 @@ const Event = {
     /**
      * 解除事件绑定。
      * - 解除绑定的同时会移除相应的存储记录（包括单次处理）。
-     *   即：绑定的单次处理在事件触发之前可以被解除绑定。
-     * - 传递事件名为假值会解除元素全部的事件绑定。
-     * - slr传递null仅针对非委托绑定，其它假值则匹配委托和非委托两者。
+     * - 事件名可以为空而后续实参有值（可为任意过滤组合）。
+     * - 明确传递slr为null针对非委托绑定，其它假值则匹配委托和非委托。
      * 注记：
-     * 绑定的单次触发处理器可以提前解绑，并且定制 unbind 事件也可以阻止解绑。
-     * 但如果单次处理器已经执行，自动解绑不会触发 unbind 和 unbound 定制事件。
+     * 绑定的单次触发处理器可以提前解绑，并且 unbind 定制事件也可以阻止解绑。
+     * 但如果单次绑定已经触发，自动解绑不会触发 unbind 和 unbound 事件。
      * 也即：unbind 可以阻止解绑，但不能阻止事件的触发和单次逻辑。
      * @param  {Element} el 目标元素
      * @param  {String} evn 事件名
-     * @param  {String|Value} slr 委托选择器，可选
+     * @param  {String|null} slr 委托选择器，可选
      * @param  {Function|Object} handle 处理函数/对象，可选
      * @param  {Boolean} cap 是否为捕获，可选
      * @return {void}
      */
     off( el, evn, slr, handle, cap ) {
-        let _map = this.store.get( el ),
-            _fltr;
+        let _map = this.store.get( el );
         if ( !_map ) return;
 
-        if ( !evn ) {
-            _fltr = () => true;
-        } else {
-            _fltr = this._filter( evn, slr, handle, cap );
-        }
-        this._removeBound( el, _map, _fltr ) && this.store.delete( el );
+        this._removeBound( el, _map, this._filter(evn, slr, handle, cap) ) && this.store.delete( el );
     },
 
 
@@ -7686,7 +7679,7 @@ const Event = {
      * 其中 options 为绑定选项集（capture, once, ...）。
      * @param  {Element} to  目标元素
      * @param  {Element} src 事件源元素
-     * @param  {[String]|Function} evns 事件名序列或过滤回调，可选
+     * @param  {[String]|Function} evns 事件名集或过滤回调，可选
      * @return {Element} to
      */
     clone( to, src, evns ) {
@@ -8008,7 +8001,7 @@ const Event = {
         let _fns = [];
 
         if ( evn ) {
-            _fns.push( n => n == evn );
+            _fns.push( n => n === evn );
         }
         if ( slr || slr === null ) {
             _fns.push( (n, s) => s === slr );
@@ -8016,10 +8009,10 @@ const Event = {
         if ( handle ) {
             _fns.push( (n, s, h) => h === handle );
         }
-        if ( cap != undefined ) {
+        if ( cap ) {
             _fns.push( (n, s, h, c) => c === !!cap );
         }
-        return _fns.length === 1 ? _fns[0] : (n, s, h, c) => _fns.every( f => f(n, s, h, c) );
+        return (n, s, h, c) => _fns.every( f => f(n, s, h, c) );
     },
 
 
@@ -8038,7 +8031,7 @@ const Event = {
         }
         evns = new Set( evns );
 
-        return name => evns.has( name );
+        return n => evns.has( n );
     },
 
 
@@ -8109,11 +8102,12 @@ const Event = {
             // 默认规则
             cap = slr ? !!this.captures[ evn ] : false;
         }
-        return [
-            evn,
-            // 明确罗列，避免用户误用。
-            { capture: !!cap, once: one, passive: opts.passive, signal: opts.signal }
-        ];
+        let _cfg = { capture: !!cap, once: one };
+
+        if ( opts.passive !== undefined  ) _cfg.passive = opts.passive;
+        if ( opts.signal !== undefined  ) _cfg.signal = opts.signal;
+
+        return [ evn, _cfg ];
     },
 
 
