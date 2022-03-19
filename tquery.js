@@ -3441,7 +3441,7 @@ function _elemRectSet( el, name, val, cso ) {
     if ( isNaN(val) ) {
         throw new Error( `${name} value is not a Number.` );
     }
-    boxSizing[ _cso.boxSizing ].set( el, name, val, cso );
+    boxSizing[ cso.boxSizing ].set( el, name, val, cso );
 
     if ( !el.style.cssText ) {
         // 内部清理。
