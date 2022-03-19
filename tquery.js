@@ -7694,7 +7694,7 @@ const Event = {
 
             // h:handle
             for ( const [h, v2] of m2 ) {
-                _fltr( evn, slr, h, v2[1] ) && this._bind( to, n, s, h, ...v2 );
+                _fltr( evn, slr, h, v2[1] ) && this._bind( to, evn, slr, h, ...v2 );
             }
         }
         return to;
