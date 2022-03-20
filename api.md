@@ -1332,20 +1332,20 @@ elo: {
 
 在浏览器的 DOM 元素中，有 `10` 个事件可以在元素上直接调用（`click, blur, focus, select, load, play, pause, scroll, reset, submit`），其中除了 `load()` 和 `submit()` 外，其它调用都会在元素上触发一个同名的事件。如果你愿意，这些方法可以直接在元素上调用，但这里也把它们作为基本接口纳入：
 
-- `$.click( el ): Element`: 模拟用户对元素的点击。
-- `$.blur( el ): Element`: 让元素失去焦点。
-- `$.focus( el ): Element`: 让元素获得焦点。
-- `$.select( el, self? ): Element|Range`: 对于可输入文本的控件，让文本被选中。
-- `$.load( el ): Element`: 载入元素引用的媒体文件，主要适用 `<video>` 和 `<audio>` 元素。
-- `$.play( el ): Element`: 媒体继续播放，适用元素同上。
-- `$.pause( el ): Element`: 媒体播放暂停，适用元素同上。
-- `$.scroll( el, pair ): Object|Element`: 获取或设置元素的滚动条位置，`pair` 支持 `{top, left}` 格式对象，也可以是一个 `[水平, 垂直]` 距离的二元数组。
-- `$.reset( el ): Element`: 表单重置。
-- `$.submit( el ): Element`: 提交表单。
+- `$.click( el ): void`: 模拟用户对元素的点击。
+- `$.blur( el ): void`: 让元素失去焦点。
+- `$.focus( el ): void`: 让元素获得焦点。
+- `$.load( el ): void`: 载入元素引用的媒体文件，主要适用 `<video>` 和 `<audio>` 元素。
+- `$.play( el ): void`: 媒体继续播放，适用元素同上。
+- `$.pause( el ): void`: 媒体播放暂停，适用元素同上。
+- `$.scroll( el, pair ): Object|void`: 获取或设置元素的滚动条位置，`pair` 支持 `{top, left}` 格式对象，也可以是一个 `[水平, 垂直]` 距离的二元数组。
+- `$.select( el, self? ): Range|void`: 对于可输入文本的控件，让文本被选中。
+- `$.reset( el ): void`: 表单重置。
+- `$.submit( el ): void`: 提交表单。
 
-对于单元素版，实现上就是在元素上简单的调用而已。对于集合版，遵循通常一致的逻辑：对集合内每一个元素分别调用。
+对于单元素版，实现上就是在元素上简单的调用而已。对于集合版，遵循通常一致的逻辑：对集合内每一个元素分别调用（并返回集合自身）。
 
-如果不是为了取值（`.scroll`）或特别的返回值（`.select`），返回目标元素自身（即实参 `el`）。
+如果不是为了取值（`.scroll`）或特别的返回值（`.select`），调用无返回值（`undefined`）。
 
 
 ## 集合专用
@@ -1850,13 +1850,14 @@ $.now(true);
 > 注意目标元素的位置不一定在结果集内，它可能被 `slp` 滤除掉。
 
 
-### $.intoView( el, y, x ): void
+### $.intoView( el, y, x, smooth? ): void
 
 滚动元素到当前视口。
 
 - `el: Element` 待滚动元素。
 - `y: Number | String | true | false` 垂直方向上的位置标识。
 - `x: Number | String` 水平方向上的位置标识。
+- `smooth: Boolean` 是否平滑滚动，可选。
 
 > 位置（y|x）含义：
 > - `0`     就近显示（如果需要）（`nearest`）。

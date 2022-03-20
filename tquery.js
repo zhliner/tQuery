@@ -1622,20 +1622,15 @@ Object.assign( tQuery, {
      * 获取/设置垂直滚动条。
      * @param  {Element|Window|Document} el
      * @param  {Number} val
-     * @param  {Boolean} inc val是否为增量值（仅限像素）
+     * @param  {Boolean} inc 增量模式
+     * @param  {Boolean} smooth 平滑模式
      * @return {Number|void}
      */
-    scrollTop( el, val, inc ) {
-        let _win = getWindow(el),
-            _old = _win ? _win.pageYOffset : el.scrollTop;
-
+    scrollTop( el, val, inc, smooth ) {
         if ( val === undefined ) {
-            return _old;
+            return scrollGet( el, false );
         }
-        if ( inc ) {
-            val = +val + _old;
-        }
-        scrollSet( _win || el, val, _win ? 'Y' : 'T' );
+        el[ inc ? 'scrollBy' : 'scrollTo' ]( scrollObj(null, val, smooth) );
     },
 
 
@@ -1643,20 +1638,15 @@ Object.assign( tQuery, {
      * 获取/设置水平滚动条。
      * @param  {Element|Window|Document} el
      * @param  {Number} val
-     * @param  {Boolean} inc val是否为增量值（仅限像素）
+     * @param  {Boolean} inc 增量模式
+     * @param  {Boolean} smooth 平滑模式
      * @return {Number|void}
      */
-    scrollLeft( el, val, inc ) {
-        let _win = getWindow(el),
-            _old = _win ? _win.pageXOffset : el.scrollLeft;
-
+    scrollLeft( el, val, inc, smooth ) {
         if ( val === undefined ) {
-            return _old;
+            return scrollGet( el, true );
         }
-        if ( inc ) {
-            val = +val + _old;
-        }
-        scrollSet( _win || el, val, _win ? 'X' : 'L' );
+        el[ inc ? 'scrollBy' : 'scrollTo' ]( scrollObj(val, null, smooth) );
     },
 
 
@@ -3455,14 +3445,13 @@ function _elemRectSet( el, name, val, cso ) {
 //
 // 可调用原生方法（事件类）。
 // 注：仅原生调用的简单封装。
+// @return {void}
 /////////////////////////////////////////////////
 
 callableNative
 .forEach(
     name =>
-    tQuery[name] = function( el ) {
-        return (name in el) && el[name](), el;
-    }
+    tQuery[name] = function( el ) { if (name in el) el[name](); }
 );
 
 
@@ -3471,31 +3460,36 @@ callableNative
  * 包含无参数调用返回滚动条的位置对象：{top, left}。
  * 传递实参时调用原生滚动方法（会触发滚动事件）。
  * pair可以是一个配置对象，也可以是一个水平/垂直坐标的二元数组。
+ * 如果平滑模式未指定，采用浏览器默认处理。
  * @param  {Element} el 包含滚动条的容器元素
  * @param  {Object2|[left, top]} pair 滚动位置配置对象。
- * @return {Object2|Element}
+ * @param  {Boolean} smooth 平滑模式，可选
+ * @return {Object2|void}
  */
-tQuery.scroll = function( el, pair ) {
+tQuery.scroll = function( el, pair, smooth ) {
     if ( pair === undefined ) {
         return {
-            top: tQuery.scrollTop(el),
-            left: tQuery.scrollLeft(el)
+            top: scrollGet( el, false ), left: scrollGet( el, true )
         };
     }
-    return ( isArr(pair) ? el.scroll(...pair) : el.scroll(pair) ), el;
+    if ( isArr(pair) ) {
+        pair = scrollObj( pair[0], pair[1], smooth );
+    }
+    return el.scroll( pair );
 }
 
 
 /**
  * 选取动作定制。
  * 兼容普通元素（包括未设置contenteditable的元素）。
+ * 如果是普通元素选取，返回选取的范围对象。
  * @param  {Element} el 目标元素
  * @param  {Boolean} self 选取元素自身，可选
- * @return {Element|Range}
+ * @return {Range|void}
  */
 tQuery.select = function( el, self ) {
     if ( 'select' in el ) {
-        return el.select(), el;
+        return el.select();
     }
     let _sel = Win.getSelection(),
         _rng = el.ownerDocument.createRange();
@@ -4953,7 +4947,7 @@ function arrayArgs( obj ) {
     if ( obj == null ) {
         return [];
     }
-    if ( isWindow(obj) || obj.nodeType) {
+    if ( obj.nodeType || isWindow(obj) ) {
         return [obj];
     }
     return obj[Symbol.iterator] ? obj : [obj];
@@ -5642,8 +5636,8 @@ function getOffset( el ) {
         _rect = el.getBoundingClientRect();
 
     return {
-        top:  _rect.top + _win.pageYOffset - _root.clientTop,
-        left: _rect.left + _win.pageXOffset - _root.clientLeft
+        top:  _rect.top + _win.scrollY - _root.clientTop,
+        left: _rect.left + _win.scrollX - _root.clientLeft
     };
 }
 
@@ -5711,7 +5705,7 @@ function calcOffset( el ) {
  * @return {Window|null}
  */
 function getWindow( el ) {
-    if (isWindow(el))
+    if ( isWindow(el) )
         return el;
 
     return el.nodeType == 9 ? el.defaultView : null;
@@ -5719,22 +5713,35 @@ function getWindow( el ) {
 
 
 /**
- * 设置窗口/元素滚动条。
- * @param {Element|Window} dom 目标对象
- * @param {Number} val 设置值
- * @param {String} xy  位置标志
+ * 构造滚动配置对象。
+ * @param  {Number} x 水平值
+ * @param  {Number} y 垂直值
+ * @param  {Boolean} smooth 是否平滑滚动，可选
+ * @return {Element|Window} its
  */
-function scrollSet( dom, val, xy ) {
-    switch (xy) {
-    case 'T':
-        return (dom.scrollTop = val);
-    case 'Y':
-        return dom.scrollTo(dom.pageXOffset, val);
-    case 'L':
-        return (dom.scrollLeft = val);
-    case 'X':
-        return dom.scrollTo(val, dom.pageYOffset);
+function scrollObj( x, y, smooth, obj = {} ) {
+    if ( x != null ) {
+        obj.left = x;
     }
+    if ( y != null ) {
+        obj.top = y;
+    }
+    if ( smooth !== undefined ) {
+        obj.behavior = smooth ? 'smooth' : 'instant';
+    }
+    return obj;
+}
+
+
+/**
+ * 获取滚动量。
+ * @param  {Element|Window|Document} el 滚动目标
+ * @param  {Boolean} isx 是否水平方向（否则为垂直向）
+ * @return {Number}
+ */
+function scrollGet( el, isx ) {
+    let _win = getWindow( el );
+    return isx ? (_win ? _win.scrollX : el.scrollLeft) : (_win ? _win.scrollY : el.scrollTop);
 }
 
 
@@ -6048,7 +6055,7 @@ function fragmentNodes( nodes, doc ) {
         _buf = [];
 
     for ( const it of arrayArgs(nodes) ) {
-        _buf.push( it.nodeType ? varyRemove(it) : it )
+        _buf.push( it.nodeType ? varyRemove(it, doc) : it )
     }
     return _frg.append( ..._buf ), _frg;
 }
@@ -6740,19 +6747,24 @@ function varyEmpty( el ) {
  * 如果节点已经脱离父容器，不会产生移除行为。
  * 因此也不会再有事件通知。
  * 注记：
- * detached事件无法再向上冒泡，但它对节点本身是有意义的。
- * 传递的数据参考节点在前[0]，之后才是原父容。
+ * detached事件无法再向上冒泡，但它对节点本身可能有意义。
+ * 如果节点不属于当前文档，则采用导入方式移除。
  * @param  {Node} node 待移除节点
+ * @param  {Document} doc 当前文档对象，可选
  * @return {Node} node
  */
-function varyRemove( node ) {
+function varyRemove( node, doc = Doc ) {
     // 兼容DocumentFragment
     let _box = node.parentNode;
 
     if ( _box && varyTrigger(node, evnDetach) !== false ) {
         let _ref = node.previousSibling;
 
-        node.remove();
+        if ( node.ownerDocument === doc ) {
+            node.remove();
+        } else {
+            node = doc.adoptNode( node );
+        }
         varyTrigger( node, evnDetached, [_ref, _box] );
     }
     return node;
@@ -8757,14 +8769,19 @@ Object.assign( tQuery, {
      * @param  {Element} el 待滚动元素
      * @param  {Number|String|true|false} y 垂直位置标识
      * @param  {Number|String} x 水平位置标识
+     * @param  {Boolean} smooth 是否平滑，可选
      * @return {void}
      */
-    intoView( el, y = 1, x = 0 ) {
+    intoView( el, y = 1, x = 0, smooth ) {
         let inline = intoViewWhere[x] || 'nearest',
             block = intoViewWhere[y] || 'start';
 
         if ( el.scrollIntoView ) {
-            return el.scrollIntoView( {block, inline} );
+            return el.scrollIntoView({
+                block,
+                inline,
+                behavior: smooth ? 'smooth' : 'auto',
+            });
         }
         // Y轴指定 nearest 才有效。
         // 以符合 scrollIntoViewIfNeeded 的默认效果。
