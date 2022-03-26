@@ -2449,7 +2449,7 @@ class Table {
             case undefined:
                 return _cap;
             case null:
-                return _cap && varyRemove(_cap);
+                return _cap && varyRemove( _cap );
         }
         if ( !val.nodeType ) {
             val = this._tbl.ownerDocument.createTextNode(val);
@@ -3858,7 +3858,7 @@ class Collector extends Array {
      */
     remove( slr ) {
         if ( !slr ) {
-            return this.map( varyRemove );
+            return this.map( el => varyRemove(el) );
         }
         let _fun = getFltr( slr ),
             _els = super.filter(
