@@ -7232,16 +7232,21 @@ const propHooks = {
 const valHooks = {
 
     // 会依所属组判断操作。
+    // 注意：对 disabled 的 el 取值无效。
     radio: {
         // 返回选中项的值，仅一项。
         get: function( el ) {
+            if ( !(el = valPass(el)) ) {
+                return el;  // undefined|null
+            }
             let _res = el.form[el.name];
-            // form[undefined]可对应到 name="undefined"，
-            // 因此需对name再确认。
-            return _res && el.name && this._get( _res.nodeType ? [_res] : _res );
+            // 注记：
+            // 单选组为单一元素时，_res 为元素本身。
+            return _res.nodeType ? (_res.checked ? _res.value : null) : this._get(_res);
+
         },
 
-        // check disabled.
+        // 同组逐一检测
         _get: list => {
             for ( let e of list ) {
                 if ( e.checked ) {
@@ -7254,11 +7259,11 @@ const valHooks = {
 
         // val为单值。
         set: function( el, val ) {
-            let _res = el.form[el.name];
-
-            if (!_res || !el.name) {
+            if ( !valPass(el) ) {
                 return;
             }
+            let _res = el.form[el.name];
+
             // 清除时包含disabled控件，但设置不含。
             return val === null ? clearChecked( $A(_res) ) : this._set( $A(_res), val );
         },
@@ -7276,19 +7281,17 @@ const valHooks = {
     },
 
     // 可能存在同名复选框。
+    // 注意：el 需为正常状态（无disabled）。
     checkbox: {
         // 重名时始终返回一个数组（可能为空）。
         // 单独的复选框返回值或null（未选中）。
         get: function( el ) {
+            if ( !(el = valPass(el)) ) {
+                return el;  // undefined|null
+            }
             let _cbs = el.form[el.name];
-            // 检查name，预防作弊
-            if ( !_cbs || !el.name ) {
-                return;
-            }
-            if ( _cbs.nodeType ) {
-                return _cbs.checked && !$is(_cbs, ':disabled') ? _cbs.value : null;
-            }
-            return this._get(_cbs);
+
+            return _cbs.nodeType ? (_cbs.checked ? _cbs.value : null) : this._get(_cbs);
         },
 
         _get: els => {
@@ -7305,20 +7308,21 @@ const valHooks = {
 
         // 支持同名多复选，支持值数组匹配。
         set: function( el, val ) {
-            let _cbs = el.form[el.name];
-
-            if (!_cbs || !el.name) {
+            if ( !valPass(el) ) {
                 return;
             }
-            return val === null ?
-                clearChecked( $A(_cbs) ) : this._set( $A(_cbs), arrVal(val) );
+            let _cbs = el.form[el.name];
+
+            return val === null ? clearChecked( $A(_cbs) ) : this._set( $A(_cbs), arrVal(val) );
         },
 
         // 不匹配的都会取消选中，
         // 因为逻辑上复选框是可以取消选中的，而单选按钮组则通常是有一个要选中。
         _set: ( els, val ) => {
             for ( let e of els ) {
-                if ( !$is(e, ':disabled') ) setProp( e, 'checked', val.includes(e.value) );
+                if ( !$is(e, ':disabled') ) {
+                    setProp( e, 'checked', val.includes(e.value) );
+                }
             }
         },
     },
@@ -7351,7 +7355,7 @@ const valHooks = {
             if ( !valPass(el) ) {
                 return;
             }
-            if (val === null) {
+            if ( val === null ) {
                 return clearSelected( el );
             }
             return el.type == 'select-one' ? selectOne( el, val ) : selectMulti( el, val );
@@ -7368,7 +7372,7 @@ const valHooks = {
     // 默认操作。
     // 对目标元素的value属性直接操作。
     _default: {
-        get: el => valPass(el) && el.value,
+        get: el => valPass(el) ? el.value : null,
         set: (el, val) => valPass(el) && setProp( el, 'value', val )
     },
 };
