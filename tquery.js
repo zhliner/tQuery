@@ -8583,6 +8583,9 @@ Object.assign( tQuery, {
         if ( !qs || !str ) {
             return sep === '' ? str.split( /(?:)/u, cnt ) : str.split( sep, cnt );
         }
+        if ( [...sep].length > 1 ) {
+            throw new Error( `${sep} must be a single character.` );
+        }
         let _op = new Spliter( sep );
 
         return [..._op.split(str, cnt)].slice( 0, cnt < 0 ? Infinity : cnt );
