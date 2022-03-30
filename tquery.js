@@ -703,13 +703,18 @@ Object.assign( tQuery, {
 
     /**
      * 插入脚本元素。
-     * - 用源码构建脚本元素并插入容器元素，返回脚本元素本身。
-     * - 也可直接传递一个配置对象，返回一个Promise实例，then传递脚本元素。
-     * - 指定容器会保留插入的脚本元素，否则自动移除（脚本正常执行）。
+     * 用源码构建脚本元素并插入容器元素，返回脚本元素本身。
+     * 也可直接传递一个配置对象，返回一个Promise实例，then传递脚本元素。
+     * 指定容器会保留插入的脚本元素，否则自动移除（脚本正常执行）。
+     * 配置对象：{
+     *      src:    {String}    <script>元素的资源定位。
+     *      type:   {String}    <script>元素资源的类型（如：text/javascript）。可选
+     *      text:   {String}    <script>元素的脚本内容，可选
+     *      ...     {String}    其它属性配置。
+     * }
      * 注记：
      * - 其它节点插入方法排除脚本源码，因此单独支持。
      * - 克隆的脚本元素修改属性后再插入，浏览器不会再次执行。
-     *
      * @param  {String|Object} data 脚本代码或配置对象
      * @param  {Element} box DOM容器元素，可选
      * @return {Element|Promise<Element>} 脚本元素或承诺对象
@@ -718,15 +723,17 @@ Object.assign( tQuery, {
         if ( typeof data == 'string' ) {
             data = { text: data };
         }
+        let _box = box || doc.head;
+
         if ( data.text != null ) {
             let _el = switchInsert(
                     setElem(doc.createElement('script'), data),
                     null,
-                    box || doc.head
+                    _box
                 );
-            return box ? _el : _el.remove();
+            return box ? _el : _box.removeChild( _el );
         }
-        return loadElement( setElem(doc.createElement('script'), data), null, box || doc.head, !box );
+        return loadElement( setElem(doc.createElement('script'), data), null, _box, !box );
     },
 
 
@@ -1662,7 +1669,7 @@ Object.assign( tQuery, {
      * @return {Element} el
      */
     addClass( el, names ) {
-        if (isFunc(names)) {
+        if ( isFunc(names) ) {
             names = names( Arr(el.classList) );
         }
         if (typeof names == 'string') {
@@ -7946,7 +7953,7 @@ const Event = {
 
     /**
      * 绑定事件处理器。
-     * 事件名和选择器已经绑定选项集已经处理和规范化。
+     * 事件名、选择器和选项集已经预处理或规范化。
      * @param  {Element} el 目标元素
      * @param  {String} evn 事件名
      * @param  {String} slr 委托选择器
@@ -7958,7 +7965,7 @@ const Event = {
      */
     _bind( el, evn, slr, handle, bound, opts ) {
         if ( this.isBound(el, evn, slr, handle, opts.capture) ||
-            // 确定会绑定。
+            // 确定会尝试绑定。
             bindTrigger(el, evnBind, evn, slr, handle, opts) === false ) {
             return;
         }
@@ -8583,6 +8590,7 @@ Object.assign( tQuery, {
         if ( !qs || !str ) {
             return sep === '' ? str.split( /(?:)/u, cnt ) : str.split( sep, cnt );
         }
+        // 只能为 String
         if ( [...sep].length > 1 ) {
             throw new Error( `${sep} must be a single character.` );
         }
