@@ -37,7 +37,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 
-const $ = (this || window).$;
+const $ = window.$;
 
 
 //
@@ -127,12 +127,27 @@ class History {
 
 
     /**
+     * 检查实例是否为节点自身变化。
+     * 目标数量内有任一实例为节点自身变化即为真。
+     * @param  {Number} i 起始下标（从0开始计数）
+     * @param  {Number} n 检测数量
+     * @return {Boolean}
+     */
+    hasNode( i, n ) {
+        return this._buf.slice( i, i+n ).some( o => o.isNodes() );
+    }
+
+
+    /**
      * 清空缓存池。
      * @return {void}
      */
     clear() {
         this._buf.length = 0;
     }
+
+
+    //-- 私有辅助 ----------------------------------------------------------------
 
 
     /**
@@ -186,6 +201,11 @@ class Attr {
     changed() {
         return this._el.getAttribute( this._name ) !== this._old;
     }
+
+
+    isNodes() {
+        return false;
+    }
 }
 
 
@@ -227,37 +247,10 @@ class Prop {
         }
         return this._el[ this._name ] !== this._old;
     }
-}
 
 
-//
-// 两个特殊属性/特性修改。
-// 即 $.prop()|.attr() 中的 text|html 设置。
-//
-class Fillx2 {
-    /**
-     * @param {Element} el 目标元素
-     * @param {[Node]} old 之前的内容
-     */
-    constructor( el, old ) {
-        this._box = el;
-        this._nds = old;
-    }
-
-
-    back() {
-        this._box.textContent = '';
-        this._box.append( ...this._nds );
-    }
-
-
-    /**
-     * 内容值是否已改变。
-     * 改变之前和之后任一时刻有值即为真。
-     * 注：值本身没有可比较性。
-     */
-    changed() {
-        return this._nds.length > 0 || this._box.textContent !== '';
+    isNodes() {
+        return false;
     }
 }
 
@@ -294,6 +287,11 @@ class Style {
     changed() {
         return this._el.style[ this._name ] !== this._old;
     }
+
+
+    isNodes() {
+        return false;
+    }
 }
 
 
@@ -328,6 +326,11 @@ class Class {
             this._el.classList
         );
         return this._ns.length !== _set.size || this._ns.some( n => !_set.has(n) );
+    }
+
+
+    isNodes() {
+        return false;
     }
 }
 
@@ -374,6 +377,11 @@ class Bound {
     changed() {
         return true;
     }
+
+
+    isNodes() {
+        return false;
+    }
 }
 
 
@@ -418,6 +426,11 @@ class Unbound {
     changed() {
         return true;
     }
+
+
+    isNodes() {
+        return false;
+    }
 }
 
 
@@ -429,30 +442,47 @@ class Unbound {
 
 
 //
+// 节点变化基类。
+// 提供标识以标记改变的是节点自身。
+// 可用于警告用户节点引用可能丢失。
+//
+class Nodes {
+    /**
+     * tQuery库已保证确实有变化才会触发事件，
+     * 因此简单返回true即可。
+     */
+    changed() {
+        return true;
+    }
+
+
+    /**
+     * 节点标识。
+     */
+    isNodes() {
+        return true;
+    }
+}
+
+
+//
 // 节点已进入。
 // 关联事件：nodesdone
 // 数据节点已事先脱离DOM。
 // 适用方法：.prepend, .append, .before, .after, replace
 //
-class Nodesdone {
+class Nodesdone extends Nodes {
     /**
      * @param {[Node]} nodes 已插入节点集
      */
     constructor( nodes ) {
+        super();
         this._nodes = nodes;
     }
 
 
     back() {
         this._nodes.forEach( nd => nd.remove() );
-    }
-
-
-    /**
-     * 外部已保证确实有内容插入，因此简单返回true。
-     */
-    changed() {
-        return true;
     }
 }
 
@@ -461,11 +491,12 @@ class Nodesdone {
 // 节点待移除。
 // 关联事件：detach
 //
-class Remove {
+class Remove extends Nodes {
     /**
      * @param {Node} node 待移除的节点
      */
     constructor( node ) {
+        super();
         this._node = node;
         this._prev = node.previousSibling;
         this._box = node.parentNode;
@@ -478,14 +509,6 @@ class Remove {
         }
         this._box.prepend( this._node );
     }
-
-
-    /**
-     * 外部已保证确实有删除才会激发事件，因此返回true。
-     */
-    changed() {
-        return true;
-    }
 }
 
 
@@ -495,12 +518,13 @@ class Remove {
 // 注记：
 // 已经为空的元素不会触发事件。
 //
-class Emptied {
+class Emptied extends Nodes {
     /**
      * @param {Element} el 容器元素
      * @param {[Node]} subs 子节点集
      */
     constructor( el, subs ) {
+        super();
         this._box = el;
         this._data = subs;
     }
@@ -509,13 +533,38 @@ class Emptied {
     back() {
         this._data.length > 0 && this._box.prepend( ...this._data );
     }
+}
+
+
+//
+// 两个特殊属性/特性修改。
+// 即 $.prop()|.attr() 中的 text|html 设置。
+//
+class Fillx2 extends Nodes {
+    /**
+     * @param {Element} el 目标元素
+     * @param {[Node]} old 之前的内容
+     */
+    constructor( el, old ) {
+        super();
+        this._box = el;
+        this._nds = old;
+    }
+
+
+    back() {
+        this._box.textContent = '';
+        this._box.append( ...this._nds );
+    }
 
 
     /**
-     * 外部已保证确实有内容才会清空，因此返回true。
+     * 内容值是否已改变。
+     * 改变之前和之后任一时刻有值即为真。
+     * 注：值本身没有可比较性。
      */
     changed() {
-        return true;
+        return this._nds.length > 0 || this._box.textContent !== '';
     }
 }
 
@@ -525,13 +574,15 @@ class Emptied {
 // 关联事件：normalize
 // 处理.normalize()将有的变化。
 //
-class Normalize {
+class Normalize extends Nodes {
     /**
      * 提取相邻文本节点集分组。
      * 对每一组提前处理。
      * @param {Element} el 事件主元素
      */
     constructor( el ) {
+        super();
+
         let _all = $.textNodes( el )
             .filter(
                 (nd, i, arr) => adjacent(nd, arr[i - 1], arr[i + 1])
@@ -546,7 +597,8 @@ class Normalize {
 
 
     /**
-     * 是否存在改变。
+     * 覆盖基类实现。
+     * 确有相邻的文本节点才会改变。
      */
     changed() {
         return this._buf.length > 0;
@@ -554,7 +606,9 @@ class Normalize {
 }
 
 
+
 //
+// 工具类：
 // 相邻文本节点处理。
 // 浏览器会忽略纯空（无值）的文本节点，因此自己处理。
 // 注记：
