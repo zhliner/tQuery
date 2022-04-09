@@ -3476,7 +3476,8 @@ callableNative
 tQuery.scroll = function( el, pair, smooth ) {
     if ( pair === undefined ) {
         return {
-            top: scrollGet( el, false ), left: scrollGet( el, true )
+            top: scrollGet( el, false ),
+            left: scrollGet( el, true )
         };
     }
     if ( isArr(pair) ) {
@@ -6605,8 +6606,10 @@ function toggleClass( el, names ) {
  * @return {nodes}
  */
 function varyPrepend( el, nodes ) {
-    if ( varyTrigger(el, evnNodeIn, [nodes, 'prepend']) !== false ) {
-        let _els = arrVal( nodes );
+    let _els = arrVal( nodes );
+
+    if ( _els.length &&
+        varyTrigger(el, evnNodeIn, [nodes, 'prepend']) !== false ) {
 
         el.prepend( ...detachNodes(_els) );
         nodesTrigger( _els, el, 'prepend' );
@@ -6622,8 +6625,10 @@ function varyPrepend( el, nodes ) {
  * @return {nodes}
  */
 function varyAppend( el, nodes ) {
-    if ( varyTrigger(el, evnNodeIn, [nodes, 'append']) !== false ) {
-        let _els = arrVal( nodes );
+    let _els = arrVal( nodes );
+
+    if ( _els.length &&
+        varyTrigger(el, evnNodeIn, [nodes, 'append']) !== false ) {
 
         el.append( ...detachNodes(_els) );
         nodesTrigger( _els, el, 'append' );
@@ -6639,8 +6644,10 @@ function varyAppend( el, nodes ) {
  * @return {nodes}
  */
 function varyAppend2( el, nodes ) {
-    if ( varyTrigger(el, evnNodeIn, [nodes, 'append']) !== false ) {
-        let _els = arrVal( nodes );
+    let _els = arrVal( nodes );
+
+    if ( _els.length &&
+        varyTrigger(el, evnNodeIn, [nodes, 'append']) !== false ) {
 
         el.append( ..._els );
         nodesTrigger( _els, el, 'append' );
@@ -6656,8 +6663,10 @@ function varyAppend2( el, nodes ) {
  * @return {nodes}
  */
 function varyBefore( el, nodes ) {
-    if ( varyTrigger(el, evnNodeIn, [nodes, 'before']) !== false ) {
-        let _els = arrVal( nodes );
+    let _els = arrVal( nodes );
+
+    if ( _els.length &&
+        varyTrigger(el, evnNodeIn, [nodes, 'before']) !== false ) {
 
         el.before( ...detachNodes(_els) );
         nodesTrigger( _els, el, 'before' );
@@ -6673,8 +6682,10 @@ function varyBefore( el, nodes ) {
  * @return {nodes}
  */
 function varyBefore2( el, nodes ) {
-    if ( varyTrigger(el, evnNodeIn, [nodes, 'before']) !== false ) {
-        let _els = arrVal( nodes );
+    let _els = arrVal( nodes );
+
+    if ( _els.length &&
+        varyTrigger(el, evnNodeIn, [nodes, 'before']) !== false ) {
 
         el.before( ..._els );
         nodesTrigger( _els, el, 'before' );
@@ -6690,8 +6701,10 @@ function varyBefore2( el, nodes ) {
  * @return {nodes}
  */
 function varyAfter( el, nodes ) {
-    if ( varyTrigger(el, evnNodeIn, [nodes, 'after']) !== false ) {
-        let _els = arrVal( nodes );
+    let _els = arrVal( nodes );
+
+    if ( _els.length &&
+        varyTrigger(el, evnNodeIn, [nodes, 'after']) !== false ) {
 
         el.after( ...detachNodes(_els) );
         nodesTrigger( _els, el, 'after' );
@@ -6705,6 +6718,8 @@ function varyAfter( el, nodes ) {
  * 完成后脱离的节点会接受到detached事件。
  * 每一个插入的新节点都会有nodeok事件，
  * 总替换完成的nodesdone事件向原节点的节点激发。
+ * 注记：
+ * 即便数据节点为空，目标节点也会被移除（同DOM标准行为）。
  * @param  {Node} el 参考节点
  * @param  {Node|[Node]} nodes 节点数据（集）
  * @return {nodes}
@@ -7325,10 +7340,10 @@ const valHooks = {
 
         // 不匹配的都会取消选中，
         // 因为逻辑上复选框是可以取消选中的，而单选按钮组则通常是有一个要选中。
-        _set: ( els, val ) => {
+        _set: ( els, vals ) => {
             for ( let e of els ) {
                 if ( !$is(e, ':disabled') ) {
-                    setProp( e, 'checked', val.includes(e.value) );
+                    setProp( e, 'checked', vals.includes(e.value) );
                 }
             }
         },
