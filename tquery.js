@@ -901,41 +901,16 @@ Object.assign( tQuery, {
 
 
     /**
-     * 提取元素内的文本节点。
-     * 内部所有的文本节点会被扁平化为一个数组。
-     * @param  {Element} el 目标元素
-     * @param  {Boolean} none 忽略无值的空文本节点，可选
-     * @param  {Boolean} clean 忽略纯空白值的文本节点，可选
-     * @return {[Text]} 文本节点集
-     */
-    textNodes( el, none, clean ) {
-        let _buf = [];
-
-        for ( const nd of el.childNodes ) {
-            let _t = nd.nodeType;
-
-            if ( _t === 1 ) {
-                _buf.push( ...tQuery.textNodes(nd, none, clean) );
-            }
-            else if ( _t === 3 && (!none || nd.textContent) ) {
-                _buf.push( nd );
-            }
-        }
-        return clean ? _buf.filter( nd => nd.textContent.trim() ) : _buf;
-    },
-
-
-    /**
      * 提取控件名值对数组。
      * 值为null或空数组的控件会被忽略（提交逻辑）。
      * 控件名以空格分隔。
-     * 结果数组成员遵循传入的名称顺序或DOM中的自然顺序。
+     * 结果数组成员遵循传入的名称顺序（如果有）或DOM中的自然顺序。
      * 名值对：[
      *      name,   // {String} 控件名
      *      value   // {String} 控件值
      * ]
      * 注：值为数组的成员会展开为多个值对（提交逻辑）。
-     * @param  {Element} form 表单元素
+     * @param  {Element} frm 表单元素
      * @param  {String} names 指定的控件名序列，可选
      * @return {[Array2]} 键值对数组
      */
@@ -943,9 +918,30 @@ Object.assign( tQuery, {
         if ( !names ) {
             return [...new FormData(frm).entries()];
         }
-        let _els = tQuery.controls(frm, names);
+        let _els = tQuery.controls( frm, names );
 
         return arr2Flat( cleanMap(_els, submitValues) );
+    },
+
+
+    /**
+     * 提取表单内控件值。
+     * 多个控件名以空格分隔，名称可能无效（无控件对应）。
+     * 默认返回一个数组，如果指定strict为真，则无效取值为null，以维持一个等长的值序列。
+     * 否则简单忽略无效的名称。
+     * 明确传递strict为null值时返回一个键值对对象。
+     * @param  {Element} frm 表单元素
+     * @param  {String} names 控件名称序列
+     * @param  {Boolean|null} strict 严格对应模式（null成员保留），可选
+     * @return {Object|[Value]} 名值对象或值数组
+     */
+    values( frm, names, strict ) {
+        let _els = tQuery.controls( frm, names, !strict );
+
+        if ( strict === null ) {
+            return _els.reduce( (o, el) => (o[el.name] = tQuery.val(el), o), {} );
+        }
+        return _els.map( el => el && tQuery.val(el) );
     },
 
 
@@ -1310,6 +1306,31 @@ Object.assign( tQuery, {
             return indexItem( _nds, +idx );
         }
         return idx === '' ? _nds.filter( nd => nd.nodeType === 3 ) : _nds;
+    },
+
+
+    /**
+     * 提取元素内的文本节点。
+     * 内部所有的文本节点会被扁平化为一个数组。
+     * @param  {Element} el 目标元素
+     * @param  {Boolean} none 忽略无值的空文本节点，可选
+     * @param  {Boolean} clean 忽略纯空白值的文本节点，可选
+     * @return {[Text]} 文本节点集
+     */
+    textNodes( el, none, clean ) {
+        let _buf = [];
+
+        for ( const nd of el.childNodes ) {
+            let _t = nd.nodeType;
+
+            if ( _t === 1 ) {
+                _buf.push( ...tQuery.textNodes(nd, none, clean) );
+            }
+            else if ( _t === 3 && (!none || nd.textContent) ) {
+                _buf.push( nd );
+            }
+        }
+        return clean ? _buf.filter( nd => nd.textContent.trim() ) : _buf;
     },
 
 

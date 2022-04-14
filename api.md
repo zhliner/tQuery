@@ -209,17 +209,6 @@ $.isXML( document.body );  // false
 > 目标控件或表单上需要绑定 `changed` 或你定制的事件来做监听处理。
 
 
-### $.textNodes( el, none?, clean ): [Text]
-
-提取目标元素内的全部文本节点集，包含纯空（无值）的文本节点。
-
-- `el: Element` 目标元素。
-- `none?: Boolean` 是否忽略无值的空文本节点，可选。
-- `clean?: Boolean` 是否清除（忽略）值为纯空白的文本节点，可选。
-
-最后会扁平化子元素内的所有文本节点，返回一个一维节点数组，顺序为在 DOM 中的自然顺序。
-
-
 ### [$.serialize( form, names ): [Array2]](docs/$.serialize.md)
 
 序列化表单内可提交类控件的名称和值。
@@ -228,6 +217,18 @@ $.isXML( document.body );  // false
 - `names: String` 指定要处理的控件名序列（空格分隔）。可选，默认全部。
 
 注意：这与表单的提交逻辑相关，因此只有实际会提交的值才会被序列化。返回一个**名/值对**（`[name, value]`）双成员数组（`Array2`）的数组。
+
+
+### $.values( frm, names, strict ): Object | Array
+
+获取表单内多个控件的值。
+
+- `frm: Element` 目标表单元素
+- `names: String` 控件名称序列，多个以空格分隔。
+- `strict: Boolean|null` 返回值数组时是否与名称一一对应（无效名称取值为一个null）。明确传递 `null` 表示无此逻辑，返回一个键值对对象。
+
+默认返回一个数组，传递strict为 `true` 可以维持一个与名称数量等长的值数组。
+明确传递strict为 `null` 时返回一个对象，键为名称，值为控件值。
 
 
 ### [$.queryURL( target ): String](docs/$.queryURL.md)
@@ -558,6 +559,17 @@ option: {
 如果需要包含注释节点（实参 `comment` 为 `true`），而又不需要指定 `idx` 的值，可设置 `idx` 为 `null` 占位。
 
 传递 `clean` 为真可以忽略内容为空白（无值）的文本节点，因此计数也不包含。
+
+
+### $.textNodes( el, none?, clean ): [Text]
+
+提取目标元素内的全部文本节点集，包含纯空（无值）的文本节点。
+
+- `el: Element` 目标元素。
+- `none?: Boolean` 是否忽略无值的空文本节点，可选。
+- `clean?: Boolean` 是否清除（忽略）值为纯空白的文本节点，可选。
+
+最后会扁平化子元素内的所有文本节点，返回一个一维节点数组，顺序为在 DOM 中的自然顺序。
 
 
 ### [$.siblings( el, slr ): [Element](docs/$.siblings.md)
