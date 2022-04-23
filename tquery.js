@@ -1067,35 +1067,34 @@ Object.assign( tQuery, {
      *  - String:   作为元素的CSS选择器，集合内成员必须是元素。
      *  - Array:    集合内成员在数组内，值任意。注：集合的交集。
      *  - Function: 自定义测试函数，接口：function(Value, Index, this): Boolean。
-     *  - Value:    其它任意类型值，相等为匹配（===）。
+     *  - Value:    其它任意类型值，相等时匹配（===）。
      *  - RegExp:   和元素的纯文本内容（textContent）执行匹配测试。
      * }
-     * 如果未传递fltr或为假值，返回集合自身。
-     * 因此也就不能用它来简单过滤假值本身（可用函数）。
+     * 如果fltr未定义，广义真值过滤。
+     * 优化：
+     * 空集时原样返回，并不延长集合链。
      * @param  {[Element|Value]} list 目标集
      * @param  {String|Array|Function|Value|RegExp} fltr 匹配条件
      * @return {[Value]} 过滤后的集合
      */
-    filter( list, fltr ) {
-        return list.length && fltr ? list.filter( getFltr(fltr) ) : list;
+    filter( list, fltr = (v => !!v) ) {
+        return list.length ? list.filter( getFltr(fltr) ) : list;
     },
 
 
     /**
      * 排除过滤。
-     * - 从集合中移除匹配的成员。
-     * - 自定义测试函数接口同上。
-     * 未传递排除条件表示全部排除，返回一个空集。
+     * 从集合中移除匹配的成员。
+     * fltr含义说明同上。
+     * 如果fltr未定义，广义真值过滤（返回假值集合）。
+     * 优化：同上.filter()。
      * @param  {[Element|Value]} list 目标集
      * @param  {String|Array|Function|Value|RegExp} fltr 排除条件
      * @return {[Value]}
      */
-    not( list, fltr ) {
-        if ( list.length == 0 ) {
+    not( list, fltr = (v => !!v) ) {
+        if ( list.length === 0 ) {
             return list;
-        }
-        if ( !fltr ) {
-            return [];
         }
         let _fun = getFltr( fltr );
 
@@ -2060,7 +2059,7 @@ Object.assign( tQuery, {
         if ( isFunc(code) ) {
             code = code( el );
         }
-        if (typeof code == 'object') {
+        if ( typeof code == 'object' ) {
             // maybe null
             code = code && outerHtml(code, sep);
         }
@@ -3793,13 +3792,12 @@ class Collector extends Array {
      * - Function:  自定义测试函数，接口：function(Value, Index, this): Boolean。
      * - Value:     任意其它类型的值，相等即为匹配（===）。
      * - RegExp:    目标元素的文本内容（textContent）匹配测试为真。
-     * 注意：
-     * 未传递匹配条件时返回当前集合自身。
+     * 如果fltr未定义，广义真值过滤。
      * @param  {String|Array|Function|Value|RegExp} fltr 匹配条件
      * @return {Collector} 过滤后的集合
      */
-    filter( fltr ) {
-        if ( this.length == 0 || !fltr ) {
+    filter( fltr = (v => !!v) ) {
+        if ( this.length === 0 || !fltr ) {
             return this;
         }
         return new Collector( super.filter( getFltr(fltr) ), this );
@@ -3814,16 +3812,13 @@ class Collector extends Array {
      * @param  {String|Array|Function|Value|RegExp} fltr 排除条件
      * @return {Collector}
      */
-    not( fltr ) {
+    not( fltr = (v => !!v) ) {
         if ( this.length == 0 ) {
             return this;
         }
-        let _fun = fltr && getFltr( fltr );
+        let _fun = getFltr( fltr );
 
-        return new Collector(
-            fltr ? super.filter( (v, i, o) => !_fun(v, i, o) ) : [],
-            this
-        );
+        return new Collector( super.filter( (v, i, o) => !_fun(v, i, o) ), this );
     }
 
 

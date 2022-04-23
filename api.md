@@ -365,12 +365,12 @@ option: {
 集合仅适用于数组，如果需要支持类数组或 `Set` 等类型，可先构造为 `Collector` 实例使用（集合版）。
 
 
-### [$.filter( list, fltr ): [Element] | [Value]](docs/$.filter.md)
+### [$.filter( list, fltr? ): [Element] | [Value]](docs/$.filter.md)
 
 对集合 `list` 中的成员用 `fltr` 匹配过滤，返回一个匹配成员的新数组。
 
 - `list: [Element] | [Value]` 目标集。
-- `fltr: String | Array | Function | Value | RegExp` 匹配过滤的条件，可以是一个选择器、数组、测试函数或一个具体的值。
+- `fltr: String | Array | Function | Value | RegExp` 匹配过滤的条件，未定义时为广义真值过滤（`v => !!v`）。
 
 这是一个通用的匹配过滤方法，可用于任意值的集合。各种匹配条件的含义：
 
@@ -386,7 +386,7 @@ option: {
 对集合 `list` 中的成员用 `fltr` 匹配排除，返回排除匹配项之后剩余成员的新数组。
 
 - `list: [Element] | [Value]` 目标集。
-- `fltr: String | Array | Function | Value | RegExp` 匹配排除条件。
+- `fltr: String | Array | Function | Value | RegExp` 匹配排除条件，未定义时为广义真值过滤（会返回一个广义假值数组）。
 
 类似 `$.filter()`，这也是一个通用的方法，可用于任意值的集合。各种匹配条件的含义：
 
