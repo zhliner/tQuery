@@ -2322,12 +2322,11 @@ Object.assign( tQuery, {
 
 
     /**
-     * 绑定单次触发。
-     * 在事件被触发（然后自动解绑）之前，off 可以移除该绑定。
+     * 绑定单次触发处理。
+     * 在事件被触发并执行（然后自动解绑）之前，off 可以移除该绑定。
      * 注意：
-     * - 事件触发之后即会解绑（浏览器行为）。
-     * - 如果是委托绑定，可能选择器并未匹配，因此事件处理器也不会被调用。
-     * - 如果不确定选择器会匹配且希望确保处理器被调用，应当使用.on()然后在处理器中手动解绑。
+     * - 如果无委托选择器，事件触发之后即会解绑（浏览器行为）。
+     * - 如果是委托绑定，则仅在选择器匹配时才会执行，此时绑定选项（opts）中的once为false而非true。
      * 注记：
      * 上面.on()中的opts参数对单次调用意义不大故忽略。
      * @param  {Element} el 目标元素
@@ -7901,12 +7900,12 @@ const Event = {
      * @return {Function} 实际绑定的事件处理函数
      */
     handlerOne( cap, handle, slr, evn, current ) {
-        let _call = handle;
+        let _wrap = this.wrapperOnce;
 
-        if ( !isFunc(_call) ) {
-            _call = handle.handleEvent.bind( handle );
+        if ( slr ) {
+            _wrap = this.wrapperOne;
         }
-        return this.wrapperOne.bind( this, handle, cap, _call, slr, evn, current );
+        return _wrap.bind( this, handle, cap, slr, evn, current );
     },
 
 
@@ -7929,34 +7928,66 @@ const Event = {
                 current:    _cur,
                 selector:   slr || null,  // "" => null
                 delegate:   ev.currentTarget,
-            }
+            };
         // 需要调用元素的原生方法完成浏览器逻辑。
         return _elo && caller(ev, _elo) !== false && !this._methodCall(ev, _elo.current);
     },
 
 
     /**
-     * 封装的实际处理器（单次触发）。
-     * 封装内部存储的清理。
+     * 单次触发封装处理器。
+     * 用于绑定单次触发接口，存储必然已存在。自动解绑由浏览器自己完成。
      * 注记：
-     * 仅用于绑定单次触发接口，因此存储必然已存在。
-     * 自动解绑由浏览器自己完成。
+     * 触发后浏览器无条件解绑，与委托选择器是否匹配无关。
+     * 因此仅适用无委托时的单次触发绑定。
      * @param  {Function|EventListener} handle 用户处理器
      * @param  {Boolean} cap 是否为捕获
-     * @param  {Function} caller 用户处理函数（可能已bind）
-     * @param  {String|null} slr 委托选择器串
+     * @param  {String} slr 委托选择器串
      * @param  {String} type 触发事件名
      * @param  {Function} current 获取当前元素的函数
      * @param  {Event} ev 原生事件对象
      * @return {Boolean|null}
      */
-    wrapperOne( handle, cap, caller, slr, type, current, ev ) {
+    wrapperOnce( handle, cap, slr, type, current, ev ) {
         this.store
             .get( ev.currentTarget )
             .get( `${+cap}:${type}|${slr}` )
             .delete( handle );
 
-        return this.wrapper( caller, slr, current, ev );
+        let _call = isFunc( handle ) ?
+            handle :
+            handle.handleEvent.bind( handle );
+
+        return this.wrapper( _call, slr, current, ev );
+    },
+
+
+    /**
+     * 单次委托触发封装处理器。
+     * 注记：
+     * 非浏览器once绑定，事件触发时需要委托选择器匹配才会执行处理器。
+     * 存储的配置选项中once为false。
+     * @param  {Function|EventListener} handle 用户处理器
+     * @param  {Boolean} cap 是否为捕获
+     * @param  {String} slr 委托选择器串
+     * @param  {String} type 触发事件名
+     * @param  {Function} current 获取当前元素的函数
+     * @param  {Event} ev 原生事件对象
+     * @return {Boolean|void}
+     */
+    wrapperOne( handle, cap, slr, type, current, ev ) {
+        let _cur = current( ev, slr );
+        if ( !_cur ) return;
+
+        let _elo = {
+                target:     ev.target,
+                current:    _cur,
+                selector:   slr,
+                delegate:   ev.currentTarget,
+            },
+            _fun = this._deleteOne( ev.currentTarget, type, slr, handle, cap );
+
+        return _fun( ev, _elo ) !== false && !this._methodCall( ev, _elo.current );
     },
 
 
@@ -7979,6 +8010,27 @@ const Event = {
             this.elementFulfill.has( _evn ) &&
             !!_fun &&
             _fun.bind(el)( ...(isArr(ev.detail) ? ev.detail : [ev.detail]) );
+    },
+
+
+    /**
+     * 移除单次处理绑定&存储。
+     * @param  {Element} el 绑定目标
+     * @param  {String} evn 事件名
+     * @param  {String} slr 委托选择器
+     * @param  {Function|EventListener} handle 用户处理器
+     * @param  {Boolean} cap 是否为捕获
+     * @return {Function} 用户处理器函数（可能已bind）
+     */
+    _deleteOne( el, evn, slr, handle, cap ) {
+        let _map = this.store
+            .get( el )
+            .get( `${+cap}:${evn}|${slr}` );
+
+        el.removeEventListener( evn, _map.get(handle)[0], cap );
+        _map.delete( handle );
+
+        return isFunc( handle ) ? handle : handle.handleEvent.bind( handle );
     },
 
 
@@ -8144,11 +8196,11 @@ const Event = {
      * @param  {String} evn 原始事件名
      * @param  {String} slr 选择器
      * @param  {Boolean|null} cap 是否为捕获
-     * @param  {Boolean} one 是否绑定为单次调用
+     * @param  {Boolean} once 是否绑定为单次触发
      * @param  {Object} opts 额外配置对象（passive, signal），可选
      * @return {[String, Object]} [事件名，配置对象]
      */
-    _evncap( evn, slr, cap, one, opts = {} ) {
+    _evncap( evn, slr, cap, once, opts = {} ) {
         if ( slr ) {
             evn = this.sendon[evn] || evn;
         }
@@ -8156,8 +8208,10 @@ const Event = {
             // 默认规则
             cap = slr ? !!this.captures[ evn ] : false;
         }
-        let _cfg = { capture: !!cap, once: one };
-
+        let _cfg = {
+            capture: !!cap,
+            once: !slr && once
+        };
         if ( opts.passive !== undefined  ) _cfg.passive = opts.passive;
         if ( opts.signal !== undefined  ) _cfg.signal = opts.signal;
 
