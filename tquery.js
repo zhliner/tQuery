@@ -1,8 +1,8 @@
-;/*! $ID: tquery.js 2021.10.20 tQuery $
+;/*! $ID: tquery.js 2022.05.12 tQuery $
 *******************************************************************************
-            Copyright (c) 铁皮工作室 2021 MIT License
+            Copyright (c) 铁皮工作室 2022 MIT License
 
-                @Project: tQuery v0.5.x
+                @Project: tQuery v0.6.x
                 @Author:  风林子 zhliner@gmail.com
 *******************************************************************************
 
@@ -319,7 +319,7 @@ const
 
 
 const
-    version = 'tQuery-0.5.3',
+    version = '0.6.0',
 
     // 临时属性名
     // 固定异样+动态，避免应用冲突。

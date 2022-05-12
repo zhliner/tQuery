@@ -1,8 +1,8 @@
-;//! $ID: history.js 2021.10.20 tQuery.Plugins $
-//++++++++++++++++++++++++++++++++++++++++++++++++
-//  Project: dom-history v0.1.0
+;//! $ID: history.js 2022.05.12 tQuery.Plugins $
+//++++++++++++++++++++++++++++++++++++++++++++++++++
+//  Project: DOM-history v0.2.0
 //  E-Mail:  zhliner@gmail.com
-//  Copyright (c) 2020 - 2021 铁皮工作室  MIT License
+//  Copyright (c) 2020 - 2022 铁皮工作室  MIT License
 //
 //////////////////////////////////////////////////////////////////////////////
 //
@@ -715,6 +715,8 @@ function callBack( handle ) {
     finally { $.config( _old ) }
 }
 
+
+History.version = 'v0.2.0';
 
 // 友好导出备用。
 History.Normalize = Normalize;
