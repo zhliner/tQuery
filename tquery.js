@@ -1521,11 +1521,11 @@ Object.assign( tQuery, {
      * @return {Element} 包裹的容器根元素
      */
     wrap( node, box, clone, event, eventdeep, doc = node.ownerDocument || Doc ) {
-        if ( typeof node === 'string' ) {
-            node = doc.createTextNode(node);
-        }
         if ( isFunc(box) ) {
             box = box( node );
+        }
+        if ( typeof node === 'string' ) {
+            node = doc.createTextNode(node);
         }
         let [_box, _root] = wrapBox( box, clone, event, eventdeep, doc );
 
@@ -4218,7 +4218,7 @@ elsEx([
     ],
     /**
      * 集合版的内外包裹。
-     * - 克隆和事件绑定的克隆仅适用于既有元素容器。
+     * 克隆和事件绑定的克隆仅适用于既有元素容器。
      * @param  {String} fn 方法名称
      * @param  {Collector} els 节点/元素集
      * @param  {Element|[Element]|String|[String]} box 容器元素或html字符串
@@ -5870,7 +5870,7 @@ function outerHtml( nodes, sep ) {
  * @return {String}
  */
 function nodeText( nodes, sep ) {
-    if (nodes.nodeType) {
+    if ( nodes.nodeType ) {
         return nodes.textContent;
     }
     let _buf = [];
